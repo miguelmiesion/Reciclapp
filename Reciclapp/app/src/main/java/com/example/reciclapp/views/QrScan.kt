@@ -3,6 +3,7 @@ package com.example.reciclapp.views
 import android.Manifest
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
+import android.util.Log
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -168,33 +169,48 @@ fun ScanQrScreen() {
 
                                                 popupController.showSuccess(puntos)
 
-                                            } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST || responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-                                                // --- CASO 2: ERROR CONOCIDO (400 o 404) ---
-                                                // Intentamos leer el mensaje específico que mandó el backend
-                                                val errorStream = connection.errorStream
-                                                val errorMsg = if (errorStream != null) {
-                                                    try {
-                                                        val errorText = errorStream.bufferedReader().use { it.readText() }
-                                                        val errorJson = JSONObject(errorText)
+                                            } else if (responseCode >= 400) { // Atrapa 400, 401, 403, 404, 500...
 
-                                                        // Si tiene el campo "error", lo usamos. Si no, fallback genérico.
-                                                        if (errorJson.has("error")) {
-                                                            errorJson.getString("error")
-                                                        } else {
-                                                            "Error al procesar el código QRa a aa "
+                                            var errorMsg = "Error al procesar el código QR" // Mensaje por defecto
+
+                                            try {
+                                                // 1. Verificamos si existe el canal de error
+                                                val stream = connection.errorStream
+                                                Log.e("ErrorStream", stream.bufferedReader().use { it.readText() })
+
+                                                if (stream != null) {
+                                                    // 2. Leemos el texto crudo
+                                                    val errorRaw = stream.bufferedReader().use { it.readText() }
+
+                                                    // --- ¡MIRA ESTO EN TU LOGCAT! ---
+                                                    println("DEBUG_SERVER_ERROR: $errorRaw")
+
+                                                    if (errorRaw.isNotEmpty()) {
+                                                        // 3. Intentamos parsear
+                                                        val json = JSONObject(errorRaw)
+
+                                                        // Tu servidor usa "error" según me mostraste
+                                                        if (json.has("error")) {
+                                                            errorMsg = json.getString("error")
                                                         }
-                                                    } catch (e: Exception) {
-                                                        "${e.message}"
+                                                        // Por si acaso usa otro formato
+                                                        else if (json.has("detail")) {
+                                                            errorMsg = json.getString("detail")
+                                                        }
                                                     }
                                                 } else {
-                                                    "Error al procesar el código QR a aaaaaaaaaaaa"
+                                                    println("DEBUG_SERVER_ERROR: El stream llegó NULO (El servidor mandó 400 pero sin cuerpo JSON)")
                                                 }
 
-                                                popupController.showError(errorMsg)
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                                Log.e("DEBUG_EXCEPTION:", "Falló el parseo del error")
+                                            }
+
+                                            // Mostramos el mensaje final (sea el del JSON o el por defecto)
+                                            popupController.showError(errorMsg)
 
                                             } else {
-                                                // --- CASO 3: CUALQUIER OTRO ERROR (500, 401, 403, etc) ---
-                                                // Mostramos mensaje genérico directamente, sin leer el stream
                                                 popupController.showError("Ha ocurrido un error inesperado.")
                                             }
                                         }
@@ -206,9 +222,7 @@ fun ScanQrScreen() {
                                             popupController.showError("Error de lectura: ${e.localizedMessage}")
                                         }
                                     } finally {
-                                        // Liberamos el semáforo local.
-                                        // El escáner seguirá bloqueado visualmente hasta que cierren el popup
-                                        // gracias al chequeo (popupController.currentResult == null)
+
                                         isProcessing = false
                                     }
                                 }

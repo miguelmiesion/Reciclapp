@@ -38,9 +38,14 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URL
+import androidx.compose.ui.platform.LocalContext
+import com.example.reciclapp.network.TokenManager
 
 @Composable
 fun LoginScreen(navController: NavController) {
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+
     // State variables
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -209,7 +214,7 @@ fun LoginScreen(navController: NavController) {
                             val accessToken = jsonResponse.getString("access")
                             val refreshToken = jsonResponse.getString("refresh")
 
-                            // TODO: Save these tokens in DataStore or SharedPreferences
+                            tokenManager.saveTokens(accessToken, refreshToken)
 
                             CoroutineScope(Dispatchers.Main).launch {
                                 statusMessage = "Login Exitoso!"
@@ -242,29 +247,6 @@ fun LoginScreen(navController: NavController) {
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-
-        // 8. "Or continue with" Section
-        Text(
-            text = "o continúa con",
-            color = Color.LightGray,
-            fontSize = 14.sp
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Google Button Placeholder
-        Surface(
-            modifier = Modifier
-                .size(50.dp)
-                .clickable { /* Handle Google Login */ },
-            shape = CircleShape,
-            shadowElevation = 4.dp,
-            color = Color.White
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(text = "G", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Blue)
-            }
-        }
 
         // Status Message for Errors
         if (statusMessage.isNotEmpty()) {

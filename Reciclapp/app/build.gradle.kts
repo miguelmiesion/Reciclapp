@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,9 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.reciclapp"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.reciclapp"
@@ -18,6 +18,19 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // --- LÓGICA DE LOCAL.PROPERTIES ---
+        val properties = Properties() // Ahora usamos Properties() directo gracias al import
+        val localPropertiesFile = project.rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(localPropertiesFile.inputStream())
+        }
+
+        // Leemos la variable. Si no existe, ponemos cadena vacía
+        val apiUrl = properties.getProperty("API_URL") ?: ""
+
+        // Inyectamos la variable con comillas escapadas
+        buildConfigField("String", "API_URL", "\"$apiUrl\"")
     }
 
     buildTypes {
@@ -36,8 +49,11 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    // --- HABILITAR BUILDCONFIG ---
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -50,7 +66,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation.compose) // Navegación
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.reciclapp.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,7 +38,7 @@ fun RegisterScreen(navController: NavController) {
     var statusMessage by remember { mutableStateOf("") }
     var statusColor by remember { mutableStateOf(Color.Gray) }
 
-    val apiUrl = "http://192.168.0.142:8000/"
+    val apiUrl = BuildConfig.API_URL
 
     Column(
         modifier = Modifier

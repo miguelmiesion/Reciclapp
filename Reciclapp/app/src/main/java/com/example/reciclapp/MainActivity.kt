@@ -1,4 +1,4 @@
-package com.example.reciclapp // Asegúrate que esto coincida con tu paquete real
+package com.example.reciclapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -23,20 +23,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URL
 
-// Definimos el color verde de tu imagen (aprox)
 val ReciclappGreen = Color(0xFF2E7D32)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Aquí llamamos a nuestra pantalla
             MaterialTheme {
                 RegisterScreen()
             }
@@ -46,23 +42,25 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun RegisterScreen() {
-    // Estas variables guardan lo que el usuario escribe (El "Estado")
     var email by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
+    // 1. NUEVO: Variables para controlar el mensaje de estado y su color
+    var statusMessage by remember { mutableStateOf("") }
+    var statusColor by remember { mutableStateOf(Color.Gray) }
+
     val apiUrl = "http://192.168.0.142:8000/"
 
-    // Column organiza los elementos uno debajo del otro
     Column(
         modifier = Modifier
-            .fillMaxSize() // Ocupa toda la pantalla
-            .padding(24.dp) // Margen general
-            .verticalScroll(rememberScrollState()), // Permite scrollear si el teclado tapa
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // 1. Logo / Título superior
         Text(
             text = "Reciclapp",
             color = ReciclappGreen,
@@ -71,9 +69,8 @@ fun RegisterScreen() {
             modifier = Modifier.align(Alignment.Start)
         )
 
-        Spacer(modifier = Modifier.height(40.dp)) // Espacio vacío
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // 2. Título Principal
         Text(
             text = "Registro",
             fontSize = 32.sp,
@@ -83,7 +80,6 @@ fun RegisterScreen() {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // 3. Subtítulo
         Text(
             text = "Si ya tenés una cuenta registrada podés iniciar sesión acá!",
             fontSize = 14.sp,
@@ -93,21 +89,16 @@ fun RegisterScreen() {
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // 4. Campos de Texto (Inputs)
-
-        // Email
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Ingresá tu email") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
-            // Aquí podrías agregar el icono (leadingIcon)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Usuario
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
@@ -118,20 +109,18 @@ fun RegisterScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Contraseña
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Ingresá tu contraseña") },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(), // Esto pone los puntitos ****
+            visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Confirmar Contraseña
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
@@ -144,9 +133,12 @@ fun RegisterScreen() {
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // 5. Botón
         Button(
             onClick = {
+                // Limpiamos el mensaje anterior al hacer click
+                statusMessage = "Cargando..."
+                statusColor = Color.Gray
+
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val url: URL = URI.create(apiUrl + "api/signup/").toURL()
@@ -161,6 +153,8 @@ fun RegisterScreen() {
                         val jsonObject = JSONObject()
                         jsonObject.put("username", username)
                         jsonObject.put("password", password)
+                        // Tip: Deberías enviar el email también si tu backend lo espera
+                        // jsonObject.put("email", email)
 
                         connection.outputStream.use { os ->
                             val input = jsonObject.toString().toByteArray(Charsets.UTF_8)
@@ -168,23 +162,27 @@ fun RegisterScreen() {
                         }
 
                         val responseCode: Int = connection.responseCode
-                        println("Respuesta del servidor: $responseCode")
 
+                        // 2. NUEVO: Actualizamos el estado según la respuesta
                         if (responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK) {
-                            // Éxito: Aquí podrías navegar a otra pantalla
-                            println("¡Usuario registrado!")
+                            statusMessage = "Usuario registrado con éxito"
+                            statusColor = ReciclappGreen // Verde
                         } else {
-                            // Error: Leer el mensaje de error del servidor
-                            val errorMsg = connection.errorStream.bufferedReader().use { it.readText() }
-                            println("Error al registrar: $errorMsg")
+                            // Leemos el error del servidor
+                            val errorStream = connection.errorStream
+                            val errorMsg = errorStream?.bufferedReader()?.use { it.readText() }
+                                ?: "Error desconocido del servidor ($responseCode)"
+
+                            statusMessage = errorMsg // Muestra lo que devolvió la API
+                            statusColor = Color.Red // Rojo
                         }
 
                         connection.disconnect()
 
-
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        println("Fallo la conexion: ${e.message}")
+                        statusMessage = "Fallo la conexión: ${e.localizedMessage}"
+                        statusColor = Color.Red
                     }
                 }
             },
@@ -192,14 +190,26 @@ fun RegisterScreen() {
                 .fillMaxWidth()
                 .height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ReciclappGreen),
-            shape = RoundedCornerShape(12.dp) // Bordes redondeados
+            shape = RoundedCornerShape(12.dp)
         ) {
             Text(text = "Register", fontSize = 18.sp)
+        }
+
+        // 3. NUEVO: Componente para mostrar el mensaje de resultado
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (statusMessage.isNotEmpty()) {
+            Text(
+                text = statusMessage,
+                color = statusColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
     }
 }
 
-// Esto permite ver el diseño sin ejecutar la app en el emulador
 @Preview(showBackground = true)
 @Composable
 fun PreviewRegistro() {

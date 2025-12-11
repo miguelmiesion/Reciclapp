@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -17,16 +18,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.reciclapp.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,7 +42,7 @@ import java.net.URL
 @Composable
 fun LoginScreen(navController: NavController) {
     // State variables
-    var username by remember { mutableStateOf("") } // Using email as per design, but API sends username
+    var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
@@ -46,8 +50,7 @@ fun LoginScreen(navController: NavController) {
     var statusMessage by remember { mutableStateOf("") }
     var statusColor by remember { mutableStateOf(Color.Gray) }
 
-    val apiUrl = "http://192.168.0.142:8000/" // Update if your IP changes
-
+    val apiUrl = BuildConfig.API_URL
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -76,35 +79,37 @@ fun LoginScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // 3. Subtitle with Clickable "Register here"
         val annotatedString = buildAnnotatedString {
             append("Si no tenés una cuenta registrada podés ")
-            withStyle(style = SpanStyle(color = ReciclappGreen, fontWeight = FontWeight.Bold)) {
-                pushStringAnnotation(tag = "REGISTER", annotation = "register")
-                append("registrarte acá !")
-                pop()
+
+            val link = LinkAnnotation.Clickable(
+                tag = "REGISTER_LINK",
+                linkInteractionListener = {
+                    navController.navigate("register_screen") {
+                        popUpTo("login_screen") { inclusive = true }
+                    }
+                }
+            )
+            withLink(link) {
+                withStyle(SpanStyle(color = ReciclappGreen, fontWeight = FontWeight.Bold)) {
+                    append("registrarte acá !")
+                }
             }
         }
 
-        androidx.compose.foundation.text.ClickableText(
+        Text(
             text = annotatedString,
-            style = LocalTextStyle.current.copy(fontSize = 14.sp, color = Color.Gray),
-            onClick = { offset ->
-                annotatedString.getStringAnnotations(tag = "REGISTER", start = offset, end = offset)
-                    .firstOrNull()?.let {
-                        navController.navigate("register_screen")
-                    }
-            },
+            fontSize = 14.sp,
+            color = Color.Gray,
             modifier = Modifier.align(Alignment.Start)
         )
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // 4. Email Input (Styled with Bottom Border like image)
         TextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Username") },
+            label = { Text("Nombre de usuario") },
             placeholder = { Text("Ingresá tu nombre de usuario") },
             leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = "User Icon") },
             modifier = Modifier.fillMaxWidth(),
@@ -112,15 +117,14 @@ fun LoginScreen(navController: NavController) {
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
                 disabledContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Black, // Dark line when active
-                unfocusedIndicatorColor = Color.Gray  // Gray line when inactive
+                focusedIndicatorColor = Color.Black,
+                unfocusedIndicatorColor = Color.Gray
             ),
             singleLine = true
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 5. Password Input
         TextField(
             value = password,
             onValueChange = { password = it },
@@ -148,7 +152,6 @@ fun LoginScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 6. Remember Me & Forgot Password Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -173,7 +176,6 @@ fun LoginScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // 7. Login Button
         Button(
             onClick = {
                 statusMessage = "Iniciando sesión..."
@@ -204,7 +206,6 @@ fun LoginScreen(navController: NavController) {
                             val response = connection.inputStream.bufferedReader().use { it.readText() }
                             val jsonResponse = JSONObject(response)
 
-                            // Here you get the tokens:
                             val accessToken = jsonResponse.getString("access")
                             val refreshToken = jsonResponse.getString("refresh")
 
@@ -252,7 +253,6 @@ fun LoginScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Google Button Placeholder
-        // If you have the asset: painter = painterResource(id = R.drawable.google_logo)
         Surface(
             modifier = Modifier
                 .size(50.dp)

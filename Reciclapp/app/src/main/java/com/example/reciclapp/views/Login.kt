@@ -1,6 +1,7 @@
 package com.example.reciclapp.views
 
 import android.app.AlertDialog
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +42,8 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URL
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.LayoutDirection
+import com.example.reciclapp.components.CommonUI
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.ui.theme.DarkerPrimary
@@ -78,13 +81,8 @@ fun LoginScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(12.dp))
-            // 1. Header Logo
-            Text(
-                text = "Reciclapp",
-                color = DarkerPrimary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                modifier = Modifier.align(Alignment.Start)
+            CommonUI().ReciclappLogo(
+                Modifier.align(Alignment.Start)
             )
 
             Spacer(modifier = Modifier.height(72.dp))
@@ -224,6 +222,7 @@ fun LoginScreen(navController: NavController) {
                                 val jsonResponse = JSONObject(response)
 
                                 val accessToken = jsonResponse.getString("access")
+                                Log.e("acc", accessToken)
                                 val refreshToken = jsonResponse.getString("refresh")
 
                                 tokenManager.saveTokens(accessToken, refreshToken)

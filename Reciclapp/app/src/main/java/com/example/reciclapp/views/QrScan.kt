@@ -2,8 +2,8 @@ package com.example.reciclapp.views
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.media.MediaPlayer
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -34,14 +34,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.example.reciclapp.R
+import com.example.reciclapp.BuildConfig
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import com.example.reciclapp.engine.QrCodeAnalyzer
+import com.example.reciclapp.network.TokenManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URI
+import com.example.reciclapp.components.LocalPopupState // Importante
+import com.example.reciclapp.ui.theme.Primary
 
 @Composable
 fun ScanQrScreen() {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val tokenManager = remember { TokenManager(context) }
+    val scope = rememberCoroutineScope()
+
+    // 1. OBTENEMOS EL CONTROLADOR DEL POPUP GLOBAL
+    val popupController = LocalPopupState.current
+
+    var isProcessing by remember { mutableStateOf(false) }
     var hasCamPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -53,9 +70,7 @@ fun ScanQrScreen() {
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            hasCamPermission = granted
-        }
+        onResult = { granted -> hasCamPermission = granted }
     )
 
     LaunchedEffect(key1 = true) {
@@ -76,7 +91,6 @@ fun ScanQrScreen() {
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Título
             Text(
                 text = "Escaneá el QR",
                 fontSize = 24.sp,
@@ -87,7 +101,6 @@ fun ScanQrScreen() {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Descripción
             Text(
                 text = "Reciclaste! Ahora escaneá el código qr del cesto para obtener tus puntos!",
                 fontSize = 14.sp,
@@ -98,11 +111,7 @@ fun ScanQrScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Línea divisoria Verde
-            HorizontalDivider(
-                thickness = 2.dp,
-                color = ReciclappGreen // Usando tu variable global
-            )
+            HorizontalDivider(thickness = 2.dp, color = ReciclappGreen)
 
             Spacer(modifier = Modifier.height(30.dp))
 
@@ -111,27 +120,101 @@ fun ScanQrScreen() {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f) // Cuadrado
+                        .aspectRatio(1f)
                         .clip(RoundedCornerShape(16.dp))
                 ) {
                     CameraPreview(
                         onQrScanned = { result ->
-                            // PROCESAMIENTO DEL JSON
-                            try {
-                                val json = JSONObject(result)
-                                val idResiduo = json.getString("ID Residuo")
-                                val puntos = json.getInt("Puntos")
-                                val tipo = json.getString("Tipo Residuo")
+                            // 2. MODIFICADO: No escanear si procesando O si hay popup abierto
+                            if (!isProcessing && popupController.currentResult == null) {
+                                isProcessing = true
 
+                                scope.launch(Dispatchers.IO) {
+                                    try {
+                                        println("QR Detectado...")
 
+                                        val json = JSONObject(result)
+                                        val idResiduo = json.getString("ID Residuo")
+                                        val puntos = json.getInt("Puntos")
 
-                            } catch (e: Exception) {
-                                // El QR no tenía el formato JSON esperado
+                                        val url = URI.create(BuildConfig.API_URL + "api/residuo/reclamar/").toURL()
+                                        val connection = url.openConnection() as HttpURLConnection
+
+                                        connection.setRequestProperty("Authorization", "Bearer ${tokenManager.getAccessToken()}")
+                                        connection.requestMethod = "POST"
+                                        connection.setRequestProperty("Content-Type", "application/json; utf-8")
+                                        connection.doOutput = true
+                                        connection.connectTimeout = 5000
+
+                                        val jsonObject = JSONObject()
+                                        jsonObject.put("id_residuo", idResiduo)
+
+                                        connection.outputStream.use { os ->
+                                            val input = jsonObject.toString().toByteArray(Charsets.UTF_8)
+                                            os.write(input, 0, input.size)
+                                        }
+
+                                        val responseCode = connection.responseCode
+                                        println("API Response: $responseCode")
+
+                                        withContext(Dispatchers.Main) {
+                                            if (responseCode == HttpURLConnection.HTTP_OK) {
+                                                // --- CASO 1: ÉXITO (200) ---
+                                                try {
+                                                    val mp = MediaPlayer.create(context, R.raw.neo_geo_coin)
+                                                    mp.start()
+                                                    mp.setOnCompletionListener { it.release() }
+                                                } catch (e: Exception) { e.printStackTrace() }
+
+                                                popupController.showSuccess(puntos)
+
+                                            } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST || responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                                                // --- CASO 2: ERROR CONOCIDO (400 o 404) ---
+                                                // Intentamos leer el mensaje específico que mandó el backend
+                                                val errorStream = connection.errorStream
+                                                val errorMsg = if (errorStream != null) {
+                                                    try {
+                                                        val errorText = errorStream.bufferedReader().use { it.readText() }
+                                                        val errorJson = JSONObject(errorText)
+
+                                                        // Si tiene el campo "error", lo usamos. Si no, fallback genérico.
+                                                        if (errorJson.has("error")) {
+                                                            errorJson.getString("error")
+                                                        } else {
+                                                            "Error al procesar el código QRa a aa "
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        "${e.message}"
+                                                    }
+                                                } else {
+                                                    "Error al procesar el código QR a aaaaaaaaaaaa"
+                                                }
+
+                                                popupController.showError(errorMsg)
+
+                                            } else {
+                                                // --- CASO 3: CUALQUIER OTRO ERROR (500, 401, 403, etc) ---
+                                                // Mostramos mensaje genérico directamente, sin leer el stream
+                                                popupController.showError("Ha ocurrido un error inesperado.")
+                                            }
+                                        }
+                                        connection.disconnect()
+
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        withContext(Dispatchers.Main) {
+                                            popupController.showError("Error de lectura: ${e.localizedMessage}")
+                                        }
+                                    } finally {
+                                        // Liberamos el semáforo local.
+                                        // El escáner seguirá bloqueado visualmente hasta que cierren el popup
+                                        // gracias al chequeo (popupController.currentResult == null)
+                                        isProcessing = false
+                                    }
+                                }
                             }
                         }
                     )
-
-                    // Overlay Oscuro con Hueco
                     QrOverlay()
                 }
             } else {
@@ -145,24 +228,17 @@ fun ScanQrScreen() {
                     Text("Se requiere permiso de cámara")
                 }
             }
-
             Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Centrá el código QR en el cuadrado",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
+            Text(text = "Centrá el código QR en el cuadrado", fontSize = 12.sp, color = Color.Gray)
         }
     }
 }
 
+// ... CameraPreview, QrOverlay y ReciclappBottomBar quedan igual ...
 @Composable
 fun CameraPreview(onQrScanned: (String) -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-
-    // Evitamos escanear multiples veces el mismo codigo muy rapido
     var lastScannedTime by remember { mutableLongStateOf(0L) }
 
     AndroidView(
@@ -174,82 +250,56 @@ fun CameraPreview(onQrScanned: (String) -> Unit) {
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
             }
-
-            // Executor para el análisis en background
             val cameraExecutor = Executors.newSingleThreadExecutor()
-
             val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
 
             cameraProviderFuture.addListener({
                 val cameraProvider = cameraProviderFuture.get()
-
                 val preview = Preview.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
-
                 val imageAnalyzer = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                     .also {
                         it.setAnalyzer(cameraExecutor, QrCodeAnalyzer { qrContent ->
-                            // Simple debounce de 2 segundos
                             val currentTime = System.currentTimeMillis()
+                            // Debounce de 3s para evitar spam a la API
                             if (currentTime - lastScannedTime > 3000) {
                                 lastScannedTime = currentTime
-                                // Volvemos al hilo principal para UI
-                                previewView.post {
-                                    onQrScanned(qrContent)
-                                }
+                                previewView.post { onQrScanned(qrContent) }
                             }
                         })
                     }
-
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
                 try {
                     cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageAnalyzer
-                    )
-                } catch (exc: Exception) {
-                    exc.printStackTrace()
-                }
+                    cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalyzer)
+                } catch (exc: Exception) { exc.printStackTrace() }
             }, ContextCompat.getMainExecutor(ctx))
-
             previewView
         },
         modifier = Modifier.fillMaxSize()
     )
 }
 
-// Dibuja el oscurecimiento alrededor del cuadro central
 @Composable
 fun QrOverlay() {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val canvasWidth = size.width
         val canvasHeight = size.height
-        val squareSize = canvasWidth * 0.6f // El cuadro central es el 60% del ancho
+        val squareSize = canvasWidth * 0.6f
         val left = (canvasWidth - squareSize) / 2
         val top = (canvasHeight - squareSize) / 2
 
-        // Capa Oscura semi-transparente (Color gris oscuro del diseño)
-        drawRect(
-            color = Color(0xFF333333).copy(alpha = 0.85f),
-        )
-
-        // "Borramos" el centro usando BlendMode.Clear para que se vea la cámara
+        drawRect(color = Color(0xFF333333).copy(alpha = 0.85f))
         drawRoundRect(
             color = Color.Transparent,
             topLeft = Offset(left, top),
             size = androidx.compose.ui.geometry.Size(squareSize, squareSize),
-            cornerRadius = CornerRadius(16.dp.toPx()), // Bordes redondeados
+            cornerRadius = CornerRadius(16.dp.toPx()),
             blendMode = BlendMode.Clear
         )
-
-        // (Opcional) Dibujar un borde blanco fino alrededor del hueco para que se vea mejor
         drawRoundRect(
             color = Color.White.copy(alpha = 0.5f),
             topLeft = Offset(left, top),
@@ -262,67 +312,32 @@ fun QrOverlay() {
 
 @Composable
 fun ReciclappBottomBar() {
-    // Barra flotante estilo "Isla" como en la imagen
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(24.dp) // Margen para que flote
+            .padding(24.dp)
             .height(70.dp)
-            .clip(RoundedCornerShape(35.dp)) // Muy redondeado
-            .background(Color(0xFFA5D6A7)) // Un verde claro (Similar al de la imagen)
+            .clip(RoundedCornerShape(35.dp))
+            .background(Color(0xFFA5D6A7))
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icono 1: Hash
-            Icon(
-                imageVector = Icons.Default.Tag, // #
-                contentDescription = "Menu",
-                tint = Color(0xFF424242),
-                modifier = Modifier.size(28.dp)
-            )
-
-            // Icono 2: Calendario
-            Icon(
-                imageVector = Icons.Outlined.CalendarToday,
-                contentDescription = "Calendario",
-                tint = Color(0xFF424242),
-                modifier = Modifier.size(28.dp)
-            )
-
-            // Icono 3: Cámara (Activo)
+            Icon(Icons.Default.Tag, "Menu", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
+            Icon(Icons.Outlined.CalendarToday, "Calendario", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
             Box(
                 modifier = Modifier
                     .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp)) // Forma cuadrada redondeada del botón central
-                    .background(ReciclappGreen), // Verde oscuro activo
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Primary),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.CameraAlt,
-                    contentDescription = "Escanear",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
+                Icon(Icons.Outlined.CameraAlt, "Escanear", tint = Color.White, modifier = Modifier.size(32.dp))
             }
-
-            // Icono 4: Regalo
-            Icon(
-                imageVector = Icons.Outlined.CardGiftcard,
-                contentDescription = "Premios",
-                tint = Color(0xFF424242),
-                modifier = Modifier.size(28.dp)
-            )
-
-            // Icono 5: Perfil
-            Icon(
-                imageVector = Icons.Outlined.Person,
-                contentDescription = "Perfil",
-                tint = Color(0xFF424242),
-                modifier = Modifier.size(28.dp)
-            )
+            Icon(Icons.Outlined.CardGiftcard, "Premios", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
+            Icon(Icons.Outlined.Person, "Perfil", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
         }
     }
 }

@@ -38,8 +38,6 @@ fun RegisterScreen(navController: NavController) {
     var statusMessage by remember { mutableStateOf("") }
     var statusColor by remember { mutableStateOf(Color.Gray) }
 
-    val apiUrl = BuildConfig.API_URL
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -128,7 +126,7 @@ fun RegisterScreen(navController: NavController) {
 
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        val url: URL = URI.create(apiUrl + "api/signup/").toURL()
+                        val url: URL = URI.create(BuildConfig.API_URL + "api/signup/").toURL()
                         val connection: HttpURLConnection =
                             url.openConnection() as HttpURLConnection
 
@@ -149,8 +147,6 @@ fun RegisterScreen(navController: NavController) {
 
                         // Actualizamos el estado según la respuesta
                         if (responseCode == HttpURLConnection.HTTP_CREATED) {
-
-                            // CAMBIO IMPORTANTE: Navegamos en el hilo principal
                             CoroutineScope(Dispatchers.Main).launch {
                                 statusMessage = "Usuario registrado con éxito"
                                 statusColor = ReciclappGreen

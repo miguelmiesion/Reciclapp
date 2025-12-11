@@ -2,6 +2,7 @@ package com.example.reciclapp.views
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.media.MediaPlayer
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -34,14 +35,27 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.example.reciclapp.R
+import com.example.reciclapp.BuildConfig
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import com.example.reciclapp.engine.QrCodeAnalyzer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URI
 
 @Composable
 fun ScanQrScreen() {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    // 1. Creamos un Scope atado al ciclo de vida de la pantalla
+    val scope = rememberCoroutineScope()
+
+    // 2. Variable para evitar escaneos múltiples (Semáforo)
+    var isProcessing by remember { mutableStateOf(false) }
     var hasCamPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -116,17 +130,71 @@ fun ScanQrScreen() {
                 ) {
                     CameraPreview(
                         onQrScanned = { result ->
-                            // PROCESAMIENTO DEL JSON
-                            try {
-                                val json = JSONObject(result)
-                                val idResiduo = json.getString("ID Residuo")
-                                val puntos = json.getInt("Puntos")
-                                val tipo = json.getString("Tipo Residuo")
+                            // 3. PRIMER FILTRO: Si ya estamos procesando, no hacemos NADA.
+                            if (!isProcessing) {
+                                isProcessing = true // Bloqueamos inmediatamente
 
+                                // Usamos el scope de la UI para lanzar la corrutina
+                                scope.launch(Dispatchers.IO) {
+                                    try {
+                                        println("QR Detectado: Buscando...") // Mira el Logcat
 
+                                        val json = JSONObject(result)
+                                        val idResiduo = json.getString("ID Residuo")
+                                        val puntos = json.getInt("Puntos")
 
-                            } catch (e: Exception) {
-                                // El QR no tenía el formato JSON esperado
+                                        // --- PETICIÓN DE RED ---
+                                        val url = URI.create(BuildConfig.API_URL + "api/residuo/reclamar/").toURL()
+                                        val connection = url.openConnection() as HttpURLConnection
+
+                                        connection.requestMethod = "POST"
+                                        connection.setRequestProperty("Content-Type", "application/json; utf-8")
+                                        connection.doOutput = true
+                                        connection.connectTimeout = 5000 // 5 seg timeout
+
+                                        val jsonObject = JSONObject()
+                                        jsonObject.put("id_residuo", idResiduo)
+
+                                        connection.outputStream.use { os ->
+                                            val input = jsonObject.toString().toByteArray(Charsets.UTF_8)
+                                            os.write(input, 0, input.size)
+                                        }
+
+                                        val responseCode = connection.responseCode
+                                        println("API Response: $responseCode") // Mira el Logcat
+
+                                        if (responseCode == HttpURLConnection.HTTP_OK) {
+
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(context, "¡Sumaste $puntos puntos!", Toast.LENGTH_LONG).show()
+
+                                                try {
+                                                    val mp = MediaPlayer.create(context, R.raw.neo_geo_coin)
+                                                    mp.start()
+                                                    mp.setOnCompletionListener { it.release() }
+                                                } catch (e: Exception) { e.printStackTrace() }
+                                            }
+
+                                            delay(3000)
+                                        } else {
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(context, "Error al reclamar: $responseCode", Toast.LENGTH_SHORT).show()
+                                            }
+                                            delay(2000)
+                                        }
+                                        connection.disconnect()
+
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        println("Error Excepción: ${e.message}")
+                                        // Si falló por JSON mal formado o Red, liberamos rápido
+                                        delay(1000)
+                                    } finally {
+                                        // 4. LIBERAMOS EL SEMÁFORO SIEMPRE
+                                        isProcessing = false
+                                        println("Escáner listo de nuevo")
+                                    }
+                                }
                             }
                         }
                     )
@@ -196,7 +264,6 @@ fun CameraPreview(onQrScanned: (String) -> Unit) {
                             val currentTime = System.currentTimeMillis()
                             if (currentTime - lastScannedTime > 3000) {
                                 lastScannedTime = currentTime
-                                // Volvemos al hilo principal para UI
                                 previewView.post {
                                     onQrScanned(qrContent)
                                 }

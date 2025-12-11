@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.reciclapp.ui.theme.ReciclappTheme
 import com.example.reciclapp.views.RegisterScreen
+import com.example.reciclapp.views.ScanQrScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,18 +39,10 @@ class MainActivity : ComponentActivity() {
 
                     // Ruta Home (La pantalla a la que vas al tener éxito)
                     composable("home_screen") {
-                        HomeScreen()
+                        ScanQrScreen()
                     }
                 }
             }
         }
-    }
-}
-
-// Pantalla temporal de Home para que no te de error la navegación
-@Composable
-fun HomeScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "¡Bienvenido al Home de Reciclapp!")
     }
 }

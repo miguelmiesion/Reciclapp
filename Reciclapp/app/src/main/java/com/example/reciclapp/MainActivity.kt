@@ -15,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.reciclapp.ui.theme.ReciclappTheme
+import com.example.reciclapp.views.LoginScreen
 import com.example.reciclapp.views.RegisterScreen
 import com.example.reciclapp.views.ScanQrScreen
 
@@ -35,6 +36,11 @@ class MainActivity : ComponentActivity() {
                     // Ruta Registro
                     composable("register_screen") {
                         RegisterScreen(navController)
+                    }
+
+                    // Ruta Login
+                    composable("login_screen") {
+                        LoginScreen(navController)
                     }
 
                     // Ruta Home (La pantalla a la que vas al tener éxito)

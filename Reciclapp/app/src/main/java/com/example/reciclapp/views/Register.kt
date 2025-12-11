@@ -10,9 +10,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -65,8 +70,26 @@ fun RegisterScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        val annotatedString = buildAnnotatedString {
+            append("Si ya tenés una cuenta registrada podés ")
+
+            val link = LinkAnnotation.Clickable(
+                tag = "LOGIN_LINK",
+                linkInteractionListener = {
+                    navController.navigate("login_screen") {
+                        popUpTo("register_screen") { inclusive = true }
+                    }
+                }
+            )
+            withLink(link) {
+                withStyle(SpanStyle(color = ReciclappGreen, fontWeight = FontWeight.Bold)) {
+                    append("iniciar sesión acá!")
+                }
+            }
+        }
+
         Text(
-            text = "Si ya tenés una cuenta registrada podés iniciar sesión acá!",
+            text = annotatedString,
             fontSize = 14.sp,
             color = Color.Gray,
             modifier = Modifier.align(Alignment.Start)

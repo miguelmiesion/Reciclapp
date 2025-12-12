@@ -41,13 +41,13 @@ import org.json.JSONObject
 import java.util.concurrent.Executors
 import com.example.reciclapp.engine.QrCodeAnalyzer
 import com.example.reciclapp.network.TokenManager
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URI
 import com.example.reciclapp.components.LocalPopupState // Importante
+import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.Primary
 
 @Composable
@@ -112,7 +112,7 @@ fun ScanQrScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            HorizontalDivider(thickness = 2.dp, color = ReciclappGreen)
+            HorizontalDivider(thickness = 2.dp, color = DarkerPrimary)
 
             Spacer(modifier = Modifier.height(30.dp))
 
@@ -167,7 +167,7 @@ fun ScanQrScreen() {
                                                     mp.setOnCompletionListener { it.release() }
                                                 } catch (e: Exception) { e.printStackTrace() }
 
-                                                popupController.showSuccess(puntos)
+                                                popupController.showSuccess("Sumaste $puntos puntos!")
 
                                             } else if (responseCode >= 400) { // Atrapa 400, 401, 403, 404, 500...
 

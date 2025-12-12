@@ -12,3 +12,8 @@ data class LoginResponse(
     val refresh: String
 )
 
+data class SignupRequest(
+    val username: String,
+    val password: String
+)
+

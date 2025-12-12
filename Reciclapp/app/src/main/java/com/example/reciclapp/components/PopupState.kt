@@ -7,7 +7,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 
 // Reutilizamos tu clase de resultados
 sealed class ScanResult {
-    data class Success(val points: Int) : ScanResult()
+    data class Success(val message : String) : ScanResult()
     data class Error(val message: String) : ScanResult()
 }
 
@@ -16,8 +16,8 @@ class PopupController {
     var currentResult by mutableStateOf<ScanResult?>(null)
         private set
 
-    fun showSuccess(points: Int) {
-        currentResult = ScanResult.Success(points)
+    fun showSuccess(message: String) {
+        currentResult = ScanResult.Success(message)
     }
 
     fun showError(message: String) {

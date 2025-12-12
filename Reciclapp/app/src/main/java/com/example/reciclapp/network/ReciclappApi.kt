@@ -8,11 +8,11 @@ interface ReciclappApi {
     @POST("api/login/")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
+    @POST("api/signup/")
+    suspend fun signup(@Body request: SignupRequest): Response<Void>
     /*
     Sugerencias de Gemini para otros endpoints:
 
-    @POST("api/signup/")
-    suspend fun signup(@Body request: SignupRequest): Response<Void>
 
 
     @POST("api/logout/")

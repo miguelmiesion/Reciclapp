@@ -233,10 +233,13 @@ fun LoginScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = if (isFormValid) DarkerPrimary else Color.Gray),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = DarkerPrimary,
+                    disabledContainerColor = Color.LightGray,
+                ),
                 shape = RoundedCornerShape(25.dp)
             ) {
-                Text(text = if (!isLoading) "Login" else "Iniciando sesión", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor)
+                Text(text = if (!isLoading) "Login" else "Iniciando sesión...", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor)
             }
 
             Spacer(modifier = Modifier.height(24.dp))

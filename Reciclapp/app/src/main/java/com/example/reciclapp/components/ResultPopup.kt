@@ -65,13 +65,11 @@ fun ResultPopup(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (result is ScanResult.Success) {
-                    Text("¡Reciclaje exitoso!", fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "+ ${result.points} Puntos",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = PopupGreen
+                        text = result.message,
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 } else if (result is ScanResult.Error) {
                     Text(

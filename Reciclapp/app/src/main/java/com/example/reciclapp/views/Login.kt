@@ -48,6 +48,9 @@ import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.LightTextColor
+import com.example.reciclapp.network.RetrofitClient
+import com.example.reciclapp.network.LoginRequest
+import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -59,12 +62,10 @@ fun LoginScreen(navController: NavController) {
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    var statusMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var isFormValid = username.isNotBlank() && password.isNotBlank()
 
     var popupController = LocalPopupState.current
-
-    val apiUrl = BuildConfig.API_URL
 
     Box(
         modifier = Modifier
@@ -193,73 +194,52 @@ fun LoginScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                    statusMessage = "Iniciando sesión..."
                     isLoading = true
 
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            val url: URL = URI.create(apiUrl + "api/login/").toURL()
-                            val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
+                            val api = RetrofitClient.getApi(context)
+                            val request = LoginRequest(username, password)
+                            val response = api.login(request)
 
-                            connection.requestMethod = "POST"
-                            connection.setRequestProperty("Content-Type", "application/json; utf-8")
-                            connection.setRequestProperty("Accept", "application/json")
-                            connection.doOutput = true
+                            withContext(Dispatchers.Main) {
+                                if (response.isSuccessful && response.body() != null) {
+                                    // Respuesta exitosa
 
-                            val jsonObject = JSONObject()
-                            jsonObject.put("username", username)
-                            jsonObject.put("password", password)
+                                    val tokens = response.body()!!
 
-                            connection.outputStream.use { os ->
-                                val input = jsonObject.toString().toByteArray(Charsets.UTF_8)
-                                os.write(input, 0, input.size)
-                            }
-
-                            val responseCode = connection.responseCode
-
-                            if (responseCode == HttpURLConnection.HTTP_OK) {
-                                val response = connection.inputStream.bufferedReader().use { it.readText() }
-                                val jsonResponse = JSONObject(response)
-
-                                val accessToken = jsonResponse.getString("access")
-                                Log.e("acc", accessToken)
-                                val refreshToken = jsonResponse.getString("refresh")
-
-                                tokenManager.saveTokens(accessToken, refreshToken)
-
-                                CoroutineScope(Dispatchers.Main).launch {
+                                    tokenManager.saveTokens(tokens.access, tokens.refresh)
                                     navController.navigate("home_screen") {
                                         popUpTo("login_screen") { inclusive = true }
                                     }
+                                } else {
+                                    // Error
+                                    if (response.code() == 401) popupController.showError("Credenciales incorrectas") else popupController.showError("Error del servidor")
                                 }
-                            } else {
-                                statusMessage = "Error: Usuario o contraseña incorrectos"
                             }
-                            connection.disconnect()
                         } catch (e: Exception) {
                             e.printStackTrace()
                             CoroutineScope(Dispatchers.Main).launch {
-                                statusMessage = "Error de conexión"
+                                popupController.showError("Error de conexión")
                             }
                         } finally {
-                            isLoading = false
+                            withContext(Dispatchers.Main) {
+                                isLoading = false
+                            }
                         }
                     }
                 },
+                enabled = isFormValid && !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DarkerPrimary),
-                shape = RoundedCornerShape(25.dp) // More rounded as per image
+                colors = ButtonDefaults.buttonColors(containerColor = if (isFormValid) DarkerPrimary else Color.Gray),
+                shape = RoundedCornerShape(25.dp)
             ) {
-                Text(text = if (!isLoading) "Login" else statusMessage, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor)
+                Text(text = if (!isLoading) "Login" else "Iniciando sesión", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-
-            if (statusMessage.isNotEmpty() && !isLoading) {
-                popupController.showError(statusMessage)
-            }
         }
     }
 }

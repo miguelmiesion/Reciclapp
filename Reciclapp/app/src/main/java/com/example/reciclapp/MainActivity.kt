@@ -24,11 +24,22 @@ import com.example.reciclapp.components.PopupController
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.components.ScanResult
 import com.example.reciclapp.components.ResultPopup
+import com.example.reciclapp.network.TokenManager
+import isTokenValid
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val tokenManager = TokenManager(applicationContext)
+
+        val startDestination = if (isTokenValid(tokenManager.getAccessToken()) || isTokenValid(tokenManager.getRefreshToken())) {
+            "home_screen"
+        } else {
+            "login_screen"
+        }
+
         setContent {
             ReciclappTheme {
                 // 1. Inicializamos el Controlador del Popup (El "mando a distancia")
@@ -46,7 +57,7 @@ class MainActivity : ComponentActivity() {
                         // --- CAPA DE FONDO: La Navegación ---
                         NavHost(
                             navController = navController,
-                            startDestination = "register_screen"
+                            startDestination = startDestination
                         ) {
                             // Ruta Registro
                             composable("register_screen") {

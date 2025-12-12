@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -129,7 +130,7 @@ fun LoginScreen(navController: NavController) {
                 onValueChange = { username = it },
                 label = { Text("Nombre de usuario") },
                 placeholder = { Text("Ingresá tu nombre de usuario") },
-                leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = "User Icon") },
+                leadingIcon = { Icon(imageVector = Icons.Default.Person, contentDescription = "User Icon") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,

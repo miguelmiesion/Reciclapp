@@ -10,13 +10,19 @@ interface ReciclappApi {
 
     @POST("api/signup/")
     suspend fun signup(@Body request: SignupRequest): Response<Void>
+
+    @POST("api/residuo/reclamar/")
+    suspend fun claimWaste(@Body request: WasteClaimRequest): Response<Void>
+
+    @POST("api/logout/")
+    suspend fun logout(): Response<Void>
+
     /*
     Sugerencias de Gemini para otros endpoints:
 
 
 
-    @POST("api/logout/")
-    suspend fun logout(): Response<Void>
+
     // Note: Logout usually sends the Refresh Token to be blacklisted, 
     // check your Swagger docs if this needs a body like RefreshTokenRequest.
 
@@ -24,9 +30,6 @@ interface ReciclappApi {
     suspend fun refreshToken(@Body request: RefreshTokenRequest): Response<LoginResponse>
 
     // --- WASTE OPERATIONS ---
-
-    @POST("api/residuos/reclamar/")
-    suspend fun claimWaste(@Body request: WasteClaimRequest): Response<Void>
 
     @GET("api/residuos/")
     suspend fun getGlobalStats(): Response<WasteStatsResponse>

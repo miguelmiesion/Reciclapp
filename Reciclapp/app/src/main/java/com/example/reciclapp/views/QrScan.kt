@@ -36,24 +36,25 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.reciclapp.R
-import com.example.reciclapp.BuildConfig
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import com.example.reciclapp.engine.QrCodeAnalyzer
-import com.example.reciclapp.network.TokenManager
+// Importamos Retrofit y Modelos
+import com.example.reciclapp.network.RetrofitClient
+import com.example.reciclapp.network.WasteClaimRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.net.HttpURLConnection
-import java.net.URI
-import com.example.reciclapp.components.LocalPopupState // Importante
+import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.Primary
 
 @Composable
 fun ScanQrScreen() {
     val context = LocalContext.current
-    val tokenManager = remember { TokenManager(context) }
+    // Nota: TokenManager ya no lo instanciamos acá manualmente para la red,
+    // porque RetrofitClient ya lo usa internamente en el Interceptor.
+
     val scope = rememberCoroutineScope()
 
     // 1. OBTENEMOS EL CONTROLADOR DEL POPUP GLOBAL
@@ -126,7 +127,7 @@ fun ScanQrScreen() {
                 ) {
                     CameraPreview(
                         onQrScanned = { result ->
-                            // 2. MODIFICADO: No escanear si procesando O si hay popup abierto
+                            // 2. No escanear si procesando O si hay popup abierto
                             if (!isProcessing && popupController.currentResult == null) {
                                 isProcessing = true
 
@@ -134,33 +135,21 @@ fun ScanQrScreen() {
                                     try {
                                         println("QR Detectado...")
 
-                                        val json = JSONObject(result)
-                                        val idResiduo = json.getString("ID Residuo")
-                                        val puntos = json.getInt("Puntos")
+                                        // 1. Parseamos el String del QR (Sigue siendo un JSON String)
+                                        val jsonQr = JSONObject(result)
+                                        val idResiduo = jsonQr.getString("ID Residuo")
+                                        val puntos = jsonQr.getInt("Puntos")
 
-                                        val url = URI.create(BuildConfig.API_URL + "api/residuo/reclamar/").toURL()
-                                        val connection = url.openConnection() as HttpURLConnection
+                                        // 2. RETROFIT: Preparamos la llamada
+                                        val api = RetrofitClient.getApi(context)
+                                        val request = WasteClaimRequest(idWaste = idResiduo)
 
-                                        connection.setRequestProperty("Authorization", "Bearer ${tokenManager.getAccessToken()}")
-                                        connection.requestMethod = "POST"
-                                        connection.setRequestProperty("Content-Type", "application/json; utf-8")
-                                        connection.doOutput = true
-                                        connection.connectTimeout = 5000
-
-                                        val jsonObject = JSONObject()
-                                        jsonObject.put("id_residuo", idResiduo)
-
-                                        connection.outputStream.use { os ->
-                                            val input = jsonObject.toString().toByteArray(Charsets.UTF_8)
-                                            os.write(input, 0, input.size)
-                                        }
-
-                                        val responseCode = connection.responseCode
-                                        println("API Response: $responseCode")
+                                        // 3. Ejecutamos la llamada (Suspend function)
+                                        val response = api.claimWaste(request)
 
                                         withContext(Dispatchers.Main) {
-                                            if (responseCode == HttpURLConnection.HTTP_OK) {
-                                                // --- CASO 1: ÉXITO (200) ---
+                                            if (response.isSuccessful) {
+                                                // --- ÉXITO (200) ---
                                                 try {
                                                     val mp = MediaPlayer.create(context, R.raw.neo_geo_coin)
                                                     mp.start()
@@ -169,60 +158,38 @@ fun ScanQrScreen() {
 
                                                 popupController.showSuccess("Sumaste $puntos puntos!")
 
-                                            } else if (responseCode >= 400) { // Atrapa 400, 401, 403, 404, 500...
+                                            } else {
+                                                // --- ERROR (400, 401, 404, 500) ---
+                                                // Retrofit lee el stream de error automáticamente
+                                                val errorBodyString = response.errorBody()?.string()
+                                                var errorMsg = "Error al procesar el código QR"
 
-                                            var errorMsg = "Error al procesar el código QR" // Mensaje por defecto
+                                                if (!errorBodyString.isNullOrEmpty()) {
+                                                    try {
+                                                        Log.e("RETROFIT_ERROR", errorBodyString)
+                                                        val jsonError = JSONObject(errorBodyString)
 
-                                            try {
-                                                // 1. Verificamos si existe el canal de error
-                                                val stream = connection.errorStream
-                                                Log.e("ErrorStream", stream.bufferedReader().use { it.readText() })
-
-                                                if (stream != null) {
-                                                    // 2. Leemos el texto crudo
-                                                    val errorRaw = stream.bufferedReader().use { it.readText() }
-
-                                                    // --- ¡MIRA ESTO EN TU LOGCAT! ---
-                                                    println("DEBUG_SERVER_ERROR: $errorRaw")
-
-                                                    if (errorRaw.isNotEmpty()) {
-                                                        // 3. Intentamos parsear
-                                                        val json = JSONObject(errorRaw)
-
-                                                        // Tu servidor usa "error" según me mostraste
-                                                        if (json.has("error")) {
-                                                            errorMsg = json.getString("error")
+                                                        if (jsonError.has("error")) {
+                                                            errorMsg = jsonError.getString("error")
+                                                        } else if (jsonError.has("detail")) {
+                                                            errorMsg = jsonError.getString("detail")
                                                         }
-                                                        // Por si acaso usa otro formato
-                                                        else if (json.has("detail")) {
-                                                            errorMsg = json.getString("detail")
-                                                        }
+                                                    } catch (e: Exception) {
+                                                        Log.e("RETROFIT_PARSE", "No se pudo parsear el error JSON")
                                                     }
-                                                } else {
-                                                    println("DEBUG_SERVER_ERROR: El stream llegó NULO (El servidor mandó 400 pero sin cuerpo JSON)")
                                                 }
 
-                                            } catch (e: Exception) {
-                                                e.printStackTrace()
-                                                Log.e("DEBUG_EXCEPTION:", "Falló el parseo del error")
-                                            }
-
-                                            // Mostramos el mensaje final (sea el del JSON o el por defecto)
-                                            popupController.showError(errorMsg)
-
-                                            } else {
-                                                popupController.showError("Ha ocurrido un error inesperado.")
+                                                popupController.showError(errorMsg)
                                             }
                                         }
-                                        connection.disconnect()
 
                                     } catch (e: Exception) {
+                                        // Errores de red (timeout, sin internet)
                                         e.printStackTrace()
                                         withContext(Dispatchers.Main) {
-                                            popupController.showError("Error de lectura: ${e.localizedMessage}")
+                                            popupController.showError("Error de conexión: ${e.localizedMessage}")
                                         }
                                     } finally {
-
                                         isProcessing = false
                                     }
                                 }
@@ -248,7 +215,7 @@ fun ScanQrScreen() {
     }
 }
 
-// ... CameraPreview, QrOverlay y ReciclappBottomBar quedan igual ...
+// ... El resto del archivo (CameraPreview, QrOverlay, ReciclappBottomBar) queda IGUAL ...
 @Composable
 fun CameraPreview(onQrScanned: (String) -> Unit) {
     val context = LocalContext.current
@@ -278,7 +245,6 @@ fun CameraPreview(onQrScanned: (String) -> Unit) {
                     .also {
                         it.setAnalyzer(cameraExecutor, QrCodeAnalyzer { qrContent ->
                             val currentTime = System.currentTimeMillis()
-                            // Debounce de 3s para evitar spam a la API
                             if (currentTime - lastScannedTime > 3000) {
                                 lastScannedTime = currentTime
                                 previewView.post { onQrScanned(qrContent) }

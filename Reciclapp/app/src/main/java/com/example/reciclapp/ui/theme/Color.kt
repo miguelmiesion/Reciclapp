@@ -12,6 +12,8 @@ val DarkerSecondary = Color(0xFF64B5F6)
 
 val Background = Color(0xFFF5F5F5)
 val TextColor = Color(0xFF424242)
+
+val LightTextColor = Color(0xFFFFFFFF)
 val DarkerText = Color(0xFF212121)
 
 val ErrorColor = Color(0xFFEE6868)

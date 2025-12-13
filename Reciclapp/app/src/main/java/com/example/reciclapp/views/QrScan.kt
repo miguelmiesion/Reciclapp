@@ -137,6 +137,7 @@ fun ScanQrScreen() {
 
                                         // 1. Parseamos el String del QR (Sigue siendo un JSON String)
                                         val jsonQr = JSONObject(result)
+                                        Log.e("JSON", jsonQr.toString())
                                         val idResiduo = jsonQr.getString("ID Residuo")
                                         val puntos = jsonQr.getInt("Puntos")
 

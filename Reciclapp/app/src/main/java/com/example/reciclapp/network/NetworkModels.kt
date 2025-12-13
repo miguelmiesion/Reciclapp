@@ -18,6 +18,7 @@ data class SignupRequest(
 )
 
 data class WasteClaimRequest(
+    @SerializedName("id_residuo")
     val idWaste: String
 )
 

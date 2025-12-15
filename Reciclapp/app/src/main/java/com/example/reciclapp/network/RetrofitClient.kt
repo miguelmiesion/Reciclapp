@@ -21,6 +21,8 @@ object RetrofitClient {
         val tokenManager = TokenManager(context)
         val authInterceptor = AuthInterceptor(tokenManager)
 
+        val authenticator = TokenAuthenticator(context, tokenManager) // <--- AGREGAR ESTO
+
         // Optional: Logging to see JSON in Logcat
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
@@ -30,6 +32,7 @@ object RetrofitClient {
         val client = OkHttpClient.Builder()
             .addInterceptor(authInterceptor) // Auto-adds "Bearer token" header [cite: 50]
             .addInterceptor(logging)
+            .authenticator(authenticator)
             .build()
 
         // 3. Build Retrofit
@@ -41,5 +44,25 @@ object RetrofitClient {
 
         apiInstance = retrofit.create(ReciclappApi::class.java)
         return apiInstance!!
+    }
+
+    // --- AGREGAR ESTA FUNCIÓN AUXILIAR ---
+    // Crea una instancia LIMPIA de Retrofit sin interceptores complejos
+    // para usar EXCLUSIVAMENTE dentro del TokenAuthenticator
+    fun buildApiForRefresh(context: Context): ReciclappApi {
+        val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(logging)
+            // IMPORTANTE: NO agregamos AuthInterceptor ni Authenticator aquí
+            // para evitar bucles infinitos.
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.API_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ReciclappApi::class.java)
     }
 }

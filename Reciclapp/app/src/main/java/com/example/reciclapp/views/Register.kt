@@ -31,8 +31,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.reciclapp.components.CommonUI
 import com.example.reciclapp.components.LocalPopupState
+import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.SignupRequest
+import com.example.reciclapp.repository.AuthRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.LightTextColor
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +46,8 @@ import kotlinx.coroutines.withContext
 fun RegisterScreen(navController: NavController) {
     val context = LocalContext.current
     var popupController = LocalPopupState.current
+
+    val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
 
     // Input States
     var username by remember { mutableStateOf("") }
@@ -205,32 +209,22 @@ fun RegisterScreen(navController: NavController) {
                     isLoading = true
 
                     CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            val api = RetrofitClient.getApi(context)
-                            val request = SignupRequest(username, password)
-                            val response = api.signup(request)
+                        val result = authRepository.signup(SignupRequest(username, password))
 
-                            withContext(Dispatchers.Main) {
-                                if (response.isSuccessful) {
+                        withContext(Dispatchers.Main) {
+                            when (result) {
+                                is NetworkResult.Success -> {
                                     popupController.showSuccess("Te registraste con éxito!")
                                     navController.navigate("login_screen") {
                                         popUpTo("register_screen") { inclusive = true }
                                     }
-                                } else {
-                                    popupController.showError(if (response.code() == 400) {
-                                        "El usuario ya existe o datos inválidos"
-                                    } else {
-                                        "Error del servidor: ${response.code()}"
-                                    })
+                                }
+                                is NetworkResult.Error -> {
+                                    // El mensaje ya viene limpio desde BaseApiResponse
+                                    popupController.showError(result.message ?: "Error desconocido")
                                 }
                             }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            withContext(Dispatchers.Main) {
-                                popupController.showError("Error de conexión")
-                            }
-                        } finally {
-                            withContext(Dispatchers.Main) { isLoading = false }
+                            isLoading = false
                         }
                     }
                 },

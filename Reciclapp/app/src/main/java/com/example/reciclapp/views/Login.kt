@@ -51,12 +51,15 @@ import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.LightTextColor
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.LoginRequest
+import com.example.reciclapp.network.NetworkResult
+import com.example.reciclapp.repository.AuthRepository
 import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginScreen(navController: NavController) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
+    val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
 
     // State variables
     var username by remember { mutableStateOf("") }
@@ -198,34 +201,21 @@ fun LoginScreen(navController: NavController) {
                     isLoading = true
 
                     CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            val api = RetrofitClient.getApi(context)
-                            val request = LoginRequest(username, password)
-                            val response = api.login(request)
+                        // 1. LLAMADA LIMPIA: Solo una línea
+                        val result = authRepository.login(LoginRequest(username, password))
 
-                            withContext(Dispatchers.Main) {
-                                if (response.isSuccessful && response.body() != null) {
-                                    // Respuesta exitosa
-
-                                    val tokens = response.body()!!
-
-                                    tokenManager.saveTokens(tokens.access, tokens.refresh)
-                                    navController.navigate("home_screen") {
-                                        popUpTo("login_screen") { inclusive = true }
-                                    }
-                                } else {
-                                    // Error
-                                    if (response.code() == 401) popupController.showError("Credenciales incorrectas") else popupController.showError("Error del servidor")
+                        withContext(Dispatchers.Main) {
+                            isLoading = false
+                            when (result) {
+                                is NetworkResult.Success -> {
+                                    // Retrofit ya convirtió el JSON a tu objeto LoginResponse
+                                    val data = result.data!!
+                                    tokenManager.saveTokens(data.access, data.refresh)
+                                    navController.navigate("home_screen")
                                 }
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            CoroutineScope(Dispatchers.Main).launch {
-                                popupController.showError("Error de conexión")
-                            }
-                        } finally {
-                            withContext(Dispatchers.Main) {
-                                isLoading = false
+                                is NetworkResult.Error -> {
+                                    popupController.showError(result.message ?: "Error desconocido")
+                                }
                             }
                         }
                     }

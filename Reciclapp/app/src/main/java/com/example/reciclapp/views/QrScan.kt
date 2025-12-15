@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.reciclapp.R
 import org.json.JSONObject
 import java.util.concurrent.Executors
@@ -46,6 +47,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.example.reciclapp.components.LocalPopupState
+import com.example.reciclapp.network.NetworkResult
+import com.example.reciclapp.repository.AuthRepository
+import com.example.reciclapp.repository.WasteRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.Primary
 
@@ -59,6 +63,8 @@ fun ScanQrScreen() {
 
     // 1. OBTENEMOS EL CONTROLADOR DEL POPUP GLOBAL
     val popupController = LocalPopupState.current
+
+    val wasteRepository = remember { WasteRepository(RetrofitClient.getApi(context)) }
 
     var isProcessing by remember { mutableStateOf(false) }
     var hasCamPermission by remember {
@@ -126,69 +132,41 @@ fun ScanQrScreen() {
                         .clip(RoundedCornerShape(16.dp))
                 ) {
                     CameraPreview(
-                        onQrScanned = { result ->
+                        onQrScanned = { resultString ->
                             // 2. No escanear si procesando O si hay popup abierto
                             if (!isProcessing && popupController.currentResult == null) {
                                 isProcessing = true
 
                                 scope.launch(Dispatchers.IO) {
                                     try {
-                                        println("QR Detectado...")
-
-                                        // 1. Parseamos el String del QR (Sigue siendo un JSON String)
-                                        val jsonQr = JSONObject(result)
-                                        Log.e("JSON", jsonQr.toString())
+                                        // 1. Parsear el QR (Esto sí es manual porque es el dato crudo de la cámara)
+                                        // Asumimos que el QR contiene: {"ID Residuo": "123", "Puntos": 10}
+                                        val jsonQr = JSONObject(resultString)
                                         val idResiduo = jsonQr.getString("ID Residuo")
-                                        val puntos = jsonQr.getInt("Puntos")
+                                        val puntos = jsonQr.optInt("Puntos", 0) // optInt evita crashes si no existe
 
-                                        // 2. RETROFIT: Preparamos la llamada
-                                        val api = RetrofitClient.getApi(context)
-                                        val request = WasteClaimRequest(idWaste = idResiduo)
-
-                                        // 3. Ejecutamos la llamada (Suspend function)
-                                        val response = api.claimWaste(request)
+                                        // 2. USAR EL REPOSITORIO (La magia limpia)
+                                        val result = wasteRepository.claimWaste(idResiduo)
 
                                         withContext(Dispatchers.Main) {
-                                            if (response.isSuccessful) {
-                                                // --- ÉXITO (200) ---
-                                                try {
-                                                    val mp = MediaPlayer.create(context, R.raw.neo_geo_coin)
-                                                    mp.start()
-                                                    mp.setOnCompletionListener { it.release() }
-                                                } catch (e: Exception) { e.printStackTrace() }
-
-                                                popupController.showSuccess("Sumaste $puntos puntos!")
-
-                                            } else {
-                                                // --- ERROR (400, 401, 404, 500) ---
-                                                // Retrofit lee el stream de error automáticamente
-                                                val errorBodyString = response.errorBody()?.string()
-                                                var errorMsg = "Error al procesar el código QR"
-
-                                                if (!errorBodyString.isNullOrEmpty()) {
-                                                    try {
-                                                        Log.e("RETROFIT_ERROR", errorBodyString)
-                                                        val jsonError = JSONObject(errorBodyString)
-
-                                                        if (jsonError.has("error")) {
-                                                            errorMsg = jsonError.getString("error")
-                                                        } else if (jsonError.has("detail")) {
-                                                            errorMsg = jsonError.getString("detail")
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        Log.e("RETROFIT_PARSE", "No se pudo parsear el error JSON")
-                                                    }
+                                            when (result) {
+                                                is NetworkResult.Success -> {
+                                                    // Éxito: Reproducir sonido y mostrar puntos
+                                                    playSound(context)
+                                                    popupController.showSuccess("Sumaste $puntos puntos!")
                                                 }
-
-                                                popupController.showError(errorMsg)
+                                                is NetworkResult.Error -> {
+                                                    // Error: El mensaje ya viene limpio desde el Repository
+                                                    popupController.showError(result.message ?: "Error desconocido")
+                                                }
                                             }
                                         }
 
                                     } catch (e: Exception) {
-                                        // Errores de red (timeout, sin internet)
+                                        // Error al parsear el JSON del QR (no de la API)
                                         e.printStackTrace()
                                         withContext(Dispatchers.Main) {
-                                            popupController.showError("Error de conexión: ${e.localizedMessage}")
+                                            popupController.showError("Código QR inválido")
                                         }
                                     } finally {
                                         isProcessing = false
@@ -220,7 +198,7 @@ fun ScanQrScreen() {
 @Composable
 fun CameraPreview(onQrScanned: (String) -> Unit) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     var lastScannedTime by remember { mutableLongStateOf(0L) }
 
     AndroidView(
@@ -320,5 +298,15 @@ fun ReciclappBottomBar() {
             Icon(Icons.Outlined.CardGiftcard, "Premios", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
             Icon(Icons.Outlined.Person, "Perfil", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
         }
+    }
+
+}
+fun playSound(context: android.content.Context) {
+    try {
+        val mp = MediaPlayer.create(context, R.raw.neo_geo_coin)
+        mp.start()
+        mp.setOnCompletionListener { it.release() }
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 }

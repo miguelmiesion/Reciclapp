@@ -145,7 +145,6 @@ fun ScanQrScreen() {
                                         val idResiduo = jsonQr.getString("ID Residuo")
                                         val puntos = jsonQr.optInt("Puntos", 0) // optInt evita crashes si no existe
 
-                                        // 2. USAR EL REPOSITORIO (La magia limpia)
                                         val result = wasteRepository.claimWaste(idResiduo)
 
                                         withContext(Dispatchers.Main) {
@@ -164,7 +163,6 @@ fun ScanQrScreen() {
 
                                     } catch (e: Exception) {
                                         // Error al parsear el JSON del QR (no de la API)
-                                        e.printStackTrace()
                                         withContext(Dispatchers.Main) {
                                             popupController.showError("Código QR inválido")
                                         }

@@ -202,7 +202,7 @@ fun LoginScreen(navController: NavController) {
 
                     CoroutineScope(Dispatchers.IO).launch {
                         // 1. LLAMADA LIMPIA: Solo una línea
-                        val result = authRepository.login(LoginRequest(username, password))
+                        val result = authRepository.login(LoginRequest(username.lowercase(), password))
 
                         withContext(Dispatchers.Main) {
                             isLoading = false

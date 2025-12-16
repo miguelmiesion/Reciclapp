@@ -209,7 +209,7 @@ fun RegisterScreen(navController: NavController) {
                     isLoading = true
 
                     CoroutineScope(Dispatchers.IO).launch {
-                        val result = authRepository.signup(SignupRequest(username, password))
+                        val result = authRepository.signup(SignupRequest(username.lowercase(), password))
 
                         withContext(Dispatchers.Main) {
                             when (result) {

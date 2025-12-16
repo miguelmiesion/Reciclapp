@@ -1,5 +1,6 @@
 package com.example.reciclapp.network
 
+import android.util.Log
 import retrofit2.Response
 import org.json.JSONObject
 
@@ -18,6 +19,7 @@ abstract class BaseApiResponse {
                 // Si es nulo (como en Void), devolvemos null pero como Success (importante para Signup/Logout)
                 return NetworkResult.Success(body)
             }
+            Log.e("ERROR: ", "${response.errorBody()}")
 
             // 3. Si no es exitosa (400, 401, 500...), parseamos el error
             val errorBody = response.errorBody()?.string()
@@ -25,11 +27,19 @@ abstract class BaseApiResponse {
             val errorMessage = try {
                 // Intentamos leer tu formato de ApiError (error o detail)
                 val jsonObject = JSONObject(errorBody ?: "")
-                when {
-                    jsonObject.has("detail") -> jsonObject.getString("detail")
-                    jsonObject.has("error") -> jsonObject.getString("error")
-                    else -> "Error del servidor: ${response.code()}"
+
+                val message = jsonObject.names()[0] as String
+                if(jsonObject.has(message)) {
+                    jsonObject.getString(message)
+                        .replace("[", "")
+                        .replace("]", "")
+                        .replace("\"", "")
                 }
+
+                else{
+                    "Error del servidor: ${response.code()}"
+                }
+
             } catch (e: Exception) {
                 "Error desconocido (${response.code()})"
             }

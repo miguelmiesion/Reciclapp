@@ -18,7 +18,6 @@ class QrCodeAnalyzer(
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
-            // Configuramos para que solo busque QRs
             val options = BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
                 .build()
@@ -34,7 +33,7 @@ class QrCodeAnalyzer(
                     }
                 }
                 .addOnFailureListener {
-                    // Manejar error si es necesario
+
                 }
                 .addOnCompleteListener {
                     imageProxy.close()

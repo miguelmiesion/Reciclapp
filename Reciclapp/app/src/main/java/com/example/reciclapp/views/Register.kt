@@ -6,7 +6,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
@@ -45,21 +44,18 @@ import kotlinx.coroutines.withContext
 @Composable
 fun RegisterScreen(navController: NavController) {
     val context = LocalContext.current
-    var popupController = LocalPopupState.current
+    val popupController = LocalPopupState.current
 
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
 
-    // Input States
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    // UI States
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Validation Logic (Reactive)
     val isPasswordLengthValid = password.length >= 6
     val isPasswordComplex = password.any { it.isDigit() } && password.any { it.isUpperCase() }
     val doPasswordsMatch = password == confirmPassword && password.isNotEmpty()
@@ -84,7 +80,6 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(72.dp))
 
-            // 2. Title
             Text(
                 text = "Registro",
                 fontSize = 32.sp,
@@ -94,7 +89,6 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 3. Link to Login
             val annotatedString = buildAnnotatedString {
                 append("Si ya tenés una cuenta registrada podés ")
                 val link = LinkAnnotation.Clickable(
@@ -121,9 +115,6 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 4. Inputs (Styled like Login)
-
-            // Username
             TextField(
                 value = username,
                 onValueChange = { username = it },
@@ -141,7 +132,6 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Password
             TextField(
                 value = password,
                 onValueChange = { password = it },
@@ -165,7 +155,6 @@ fun RegisterScreen(navController: NavController) {
                 )
             )
 
-            // Helper text for password requirements
             if (password.isNotEmpty() && (!isPasswordLengthValid || !isPasswordComplex)) {
                 Text(
                     text = "Mín. 6 caracteres, 1 mayúscula, 1 número",
@@ -177,7 +166,6 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Confirm Password
             TextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
@@ -203,7 +191,6 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // 5. Register Button with Retrofit
             Button(
                 onClick = {
                     isLoading = true
@@ -220,7 +207,6 @@ fun RegisterScreen(navController: NavController) {
                                     }
                                 }
                                 is NetworkResult.Error -> {
-                                    // El mensaje ya viene limpio desde BaseApiResponse
                                     popupController.showError(result.message ?: "Error desconocido")
                                 }
                             }

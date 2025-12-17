@@ -2,7 +2,6 @@ package com.example.reciclapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Your Custom Figma Colors
 val Primary = Color(0xFFA5D6A7)
 val DarkerPrimary = Color(0xFF338437)
 val LighterPrimary = Color(0xFFC8E6C9)

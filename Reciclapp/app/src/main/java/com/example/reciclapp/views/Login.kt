@@ -1,18 +1,14 @@
 package com.example.reciclapp.views
 
 import android.app.AlertDialog
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
@@ -34,16 +30,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.reciclapp.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URI
-import java.net.URL
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.LayoutDirection
 import com.example.reciclapp.components.CommonUI
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.network.TokenManager
@@ -61,15 +51,14 @@ fun LoginScreen(navController: NavController) {
     val tokenManager = remember { TokenManager(context) }
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
 
-    // State variables
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
     var isLoading by remember { mutableStateOf(false) }
-    var isFormValid = username.isNotBlank() && password.isNotBlank()
+    val isFormValid = username.isNotBlank() && password.isNotBlank()
 
-    var popupController = LocalPopupState.current
+    val popupController = LocalPopupState.current
 
     Box(
         modifier = Modifier
@@ -201,14 +190,12 @@ fun LoginScreen(navController: NavController) {
                     isLoading = true
 
                     CoroutineScope(Dispatchers.IO).launch {
-                        // 1. LLAMADA LIMPIA: Solo una línea
                         val result = authRepository.login(LoginRequest(username.lowercase(), password))
 
                         withContext(Dispatchers.Main) {
                             isLoading = false
                             when (result) {
                                 is NetworkResult.Success -> {
-                                    // Retrofit ya convirtió el JSON a tu objeto LoginResponse
                                     val data = result.data!!
                                     tokenManager.saveTokens(data.access, data.refresh)
                                     navController.navigate("home_screen")

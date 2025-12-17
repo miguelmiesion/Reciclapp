@@ -14,19 +14,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Si definiste ReciclappGreen en otro lado, impórtalo. Si no, úsalo aquí:
 val PopupGreen = Color(0xFF2E7D32)
 val PopupRed = Color(0xFFD32F2F)
 
 @Composable
 fun ResultPopup(
-    result: ScanResult, // Esta clase viene de tu archivo PopupState.kt
+    result: ScanResult,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss, // Se cierra si tocas fuera
+        onDismissRequest = onDismiss,
 
-        // --- BOTÓN INFERIOR ---
         confirmButton = {
             Button(
                 onClick = onDismiss,
@@ -40,7 +38,7 @@ fun ResultPopup(
             }
         },
 
-        // --- TÍTULO CON ICONO ---
+
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -58,7 +56,6 @@ fun ResultPopup(
             }
         },
 
-        // --- TEXTO DEL MENSAJE ---
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),

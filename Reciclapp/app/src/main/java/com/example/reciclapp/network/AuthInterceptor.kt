@@ -12,11 +12,7 @@ class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
             return chain.proceed(originalRequest)
         }
 
-        val token = tokenManager.getAccessToken()
-
-        if (token == null) {
-            return chain.proceed(originalRequest)
-        }
+        val token = tokenManager.getAccessToken() ?: return chain.proceed(originalRequest)
 
         val authenticatedRequest = originalRequest.newBuilder()
             .addHeader("Authorization", "Bearer $token")

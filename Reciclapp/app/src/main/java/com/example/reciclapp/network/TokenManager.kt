@@ -17,14 +17,14 @@ class TokenManager(private val context: Context) {
     private var sharedPreferences: SharedPreferences
 
     init {
-        // Intentamos crear la instancia segura
+
         sharedPreferences = try {
             createSharedPreferences()
         } catch (e: Exception) {
             e.printStackTrace()
-            // SI FALLA: Borramos el archivo XML corrupto manualmente
+
             deleteSharedPreferences()
-            // E intentamos crearla de nuevo limpia
+
             createSharedPreferences()
         }
     }
@@ -42,7 +42,7 @@ class TokenManager(private val context: Context) {
     @SuppressLint("SdCardPath")
     private fun deleteSharedPreferences() {
         try {
-            // Truco para borrar SharedPreferences corruptas
+
             val packageName = context.packageName
             val prefFile = File("/data/data/$packageName/shared_prefs/secure_prefs.xml")
             if (prefFile.exists()) {
@@ -53,7 +53,7 @@ class TokenManager(private val context: Context) {
         }
     }
 
-    // ... (El resto de tus métodos saveTokens, getAccessToken, etc. siguen igual)
+
     fun saveTokens(accessToken: String, refreshToken: String) {
         sharedPreferences.edit {
             putString("ACCESS_TOKEN", accessToken)

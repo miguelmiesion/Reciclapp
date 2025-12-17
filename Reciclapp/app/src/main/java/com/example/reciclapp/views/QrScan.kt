@@ -3,7 +3,6 @@ package com.example.reciclapp.views
 import android.Manifest
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
-import android.util.Log
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,26 +28,21 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.reciclapp.R
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import com.example.reciclapp.engine.QrCodeAnalyzer
-// Importamos Retrofit y Modelos
 import com.example.reciclapp.network.RetrofitClient
-import com.example.reciclapp.network.WasteClaimRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.network.NetworkResult
-import com.example.reciclapp.repository.AuthRepository
 import com.example.reciclapp.repository.WasteRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.Primary
@@ -56,12 +50,9 @@ import com.example.reciclapp.ui.theme.Primary
 @Composable
 fun ScanQrScreen() {
     val context = LocalContext.current
-    // Nota: TokenManager ya no lo instanciamos acá manualmente para la red,
-    // porque RetrofitClient ya lo usa internamente en el Interceptor.
 
     val scope = rememberCoroutineScope()
 
-    // 1. OBTENEMOS EL CONTROLADOR DEL POPUP GLOBAL
     val popupController = LocalPopupState.current
 
     val wasteRepository = remember { WasteRepository(RetrofitClient.getApi(context)) }
@@ -123,7 +114,6 @@ fun ScanQrScreen() {
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            // --- AREA DE CÁMARA ---
             if (hasCamPermission) {
                 Box(
                     modifier = Modifier
@@ -133,36 +123,33 @@ fun ScanQrScreen() {
                 ) {
                     CameraPreview(
                         onQrScanned = { resultString ->
-                            // 2. No escanear si procesando O si hay popup abierto
                             if (!isProcessing && popupController.currentResult == null) {
                                 isProcessing = true
 
                                 scope.launch(Dispatchers.IO) {
                                     try {
-                                        // 1. Parsear el QR (Esto sí es manual porque es el dato crudo de la cámara)
-                                        // Asumimos que el QR contiene: {"ID Residuo": "123", "Puntos": 10}
+
                                         val jsonQr = JSONObject(resultString)
                                         val idResiduo = jsonQr.getString("ID Residuo")
-                                        val puntos = jsonQr.optInt("Puntos", 0) // optInt evita crashes si no existe
+                                        val puntos = jsonQr.optInt("Puntos", 0)
 
                                         val result = wasteRepository.claimWaste(idResiduo)
 
                                         withContext(Dispatchers.Main) {
                                             when (result) {
                                                 is NetworkResult.Success -> {
-                                                    // Éxito: Reproducir sonido y mostrar puntos
+
                                                     playSound(context)
                                                     popupController.showSuccess("Sumaste $puntos puntos!")
                                                 }
                                                 is NetworkResult.Error -> {
-                                                    // Error: El mensaje ya viene limpio desde el Repository
+
                                                     popupController.showError(result.message ?: "Error desconocido")
                                                 }
                                             }
                                         }
 
-                                    } catch (e: Exception) {
-                                        // Error al parsear el JSON del QR (no de la API)
+                                    } catch (_: Exception) {
                                         withContext(Dispatchers.Main) {
                                             popupController.showError("Código QR inválido")
                                         }
@@ -195,7 +182,7 @@ fun ScanQrScreen() {
 // ... El resto del archivo (CameraPreview, QrOverlay, ReciclappBottomBar) queda IGUAL ...
 @Composable
 fun CameraPreview(onQrScanned: (String) -> Unit) {
-    val context = LocalContext.current
+    LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     var lastScannedTime by remember { mutableLongStateOf(0L) }
 
@@ -223,7 +210,6 @@ fun CameraPreview(onQrScanned: (String) -> Unit) {
                         it.setAnalyzer(cameraExecutor, QrCodeAnalyzer { qrContent ->
                             val currentTime = System.currentTimeMillis()
                             if (currentTime - lastScannedTime > 3000) {
-                                lastScannedTime = currentTime
                                 previewView.post { onQrScanned(qrContent) }
                             }
                         })

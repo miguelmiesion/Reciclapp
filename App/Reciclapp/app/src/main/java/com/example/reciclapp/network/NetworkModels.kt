@@ -31,6 +31,11 @@ data class ApiError(
     val detail: String? = null
 )
 
+data class UserProfileResponse(
+    val id: Int,
+    val username: String
+)
+
 data class RankingEntry(
     val username: String,
 
@@ -38,6 +43,6 @@ data class RankingEntry(
     val totalPoints: Int
 )
 
-data class PositionResponse(
-    val posicion: Int
+data class UserPositionResponse(
+    val posicion: Int,
 )

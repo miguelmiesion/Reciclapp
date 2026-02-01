@@ -26,10 +26,13 @@ interface ReciclappApi {
         @Query("tipo_residuo") tipoResiduo: String? = null
     ): Response<List<RankingEntry>>
 
+    @GET("api/datos_usuario/")
+    suspend fun getUserProfile(): Response<UserProfileResponse>
+
     @GET("api/ranking/posicion/")
     suspend fun getUserPosition(
         @Query("id_usuario") userId: Int,
         @Query("tipo_residuo") tipoResiduo: String? = null
-    ): Response<PositionResponse>
+    ): Response<UserPositionResponse>
 }
 

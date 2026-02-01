@@ -14,54 +14,100 @@ import kotlinx.coroutines.launch
 data class RankingUiState(
     val topUsers: List<RankingEntry> = emptyList(),
     val userPosition: Int? = null,
+    val currentUserId: Int? = null,
+    val currentUserName: String = "",
+    val currentFilter: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null
 )
 
 class RankingViewModel(
-    private val api: ReciclappApi,
-    private val currentUserId: Int
+    private val api: ReciclappApi
 ) : ViewModel() {
 
     var uiState by mutableStateOf(RankingUiState())
         private set
 
     init {
-        loadRanking()
+        loadInitialData()
     }
 
-    private fun loadRanking() {
+    private fun loadInitialData() {
         viewModelScope.launch {
             uiState = uiState.copy(isLoading = true)
             try {
-                val topDeferred = async { api.getTopRanking() }
-                val posDeferred = async { api.getUserPosition(currentUserId) }
-
-                val topResponse = topDeferred.await()
-                val posResponse = posDeferred.await()
-
-                if (topResponse.isSuccessful) {
-                    val listaUsuarios = topResponse.body() ?: emptyList()
+                // 1. Perfil
+                val profileResponse = api.getUserProfile()
+                if (profileResponse.isSuccessful && profileResponse.body() != null) {
+                    val user = profileResponse.body()!!
+                    val nombreLimpio = user.username.trim()
 
                     uiState = uiState.copy(
-                        isLoading = false,
-                        topUsers = listaUsuarios, // Asignación directa
-                        userPosition = posResponse.body()?.posicion
+                        currentUserId = user.id,
+                        currentUserName = nombreLimpio
                     )
+
+                    // 2. Ranking
+                    fetchRankings(user.id, uiState.currentFilter, nombreLimpio)
                 } else {
-                    uiState = uiState.copy(isLoading = false, error = "Error API: ${topResponse.code()}")
+                    uiState = uiState.copy(isLoading = false, error = "Fallo perfil")
                 }
             } catch (e: Exception) {
                 uiState = uiState.copy(isLoading = false, error = e.message)
-                e.printStackTrace()
             }
+        }
+    }
+
+    fun updateFilter(newFilter: String?) {
+        if (uiState.currentFilter != newFilter) {
+            uiState = uiState.copy(currentFilter = newFilter)
+            uiState.currentUserId?.let { userId ->
+                viewModelScope.launch { fetchRankings(userId, newFilter, uiState.currentUserName) }
+            }
+        }
+    }
+
+    private suspend fun fetchRankings(userId: Int, filter: String?, miNombre: String) {
+        try {
+            val topDeferred = viewModelScope.async { api.getTopRanking(filter) }
+            val posDeferred = viewModelScope.async { api.getUserPosition(userId, filter) }
+
+            val topResponse = topDeferred.await()
+            val posResponse = posDeferred.await()
+
+            if (topResponse.isSuccessful && posResponse.isSuccessful) {
+                val rawList = topResponse.body() ?: emptyList()
+
+                // 1. ORDENAMOS Z-A (Visualmente correcto)
+                val listaOrdenada = rawList.sortedWith(
+                    compareByDescending<RankingEntry> { it.totalPoints }
+                        .thenByDescending { it.username }
+                )
+
+                // 2. BUSCAMOS TU INDICE (La lógica que arregló el 7 vs 4)
+                val index = listaOrdenada.indexOfFirst {
+                    it.username.trim().equals(miNombre, ignoreCase = true)
+                }
+
+                // 3. SOBRESCRIBIMOS POSICIÓN
+                val posFinal = if (index != -1) (index + 1) else posResponse.body()?.posicion
+
+                uiState = uiState.copy(
+                    isLoading = false,
+                    topUsers = listaOrdenada,
+                    userPosition = posFinal
+                )
+            } else {
+                uiState = uiState.copy(isLoading = false, error = "Error API")
+            }
+        } catch (e: Exception) {
+            uiState = uiState.copy(isLoading = false, error = e.message)
         }
     }
 }
 
-// Factory para poder pasar parámetros al ViewModel
-class RankingViewModelFactory(private val api: ReciclappApi, private val userId: Int) : ViewModelProvider.Factory {
+class RankingViewModelFactory(private val api: ReciclappApi) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return RankingViewModel(api, userId) as T
+        return RankingViewModel(api) as T
     }
 }

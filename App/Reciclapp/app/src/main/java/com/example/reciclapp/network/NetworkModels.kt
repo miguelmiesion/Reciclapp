@@ -31,3 +31,13 @@ data class ApiError(
     val detail: String? = null
 )
 
+data class RankingEntry(
+    val username: String,
+
+    @SerializedName("total_puntos")
+    val totalPoints: Int
+)
+
+data class PositionResponse(
+    val posicion: Int
+)

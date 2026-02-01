@@ -46,9 +46,12 @@ import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.repository.WasteRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.Primary
+import androidx.navigation.NavController
+import com.example.reciclapp.components.ReciclappBottomBar
+
 
 @Composable
-fun ScanQrScreen() {
+fun ScanQrScreen(navController: NavController) {
     val context = LocalContext.current
 
     val scope = rememberCoroutineScope()
@@ -79,7 +82,7 @@ fun ScanQrScreen() {
     }
 
     Scaffold(
-        bottomBar = { ReciclappBottomBar() }
+        bottomBar = { ReciclappBottomBar(navController) }
     ) { paddingValues ->
         Column(
             modifier = Modifier

@@ -20,5 +20,16 @@ interface ReciclappApi {
 
     @POST("api/token/refresh/")
     fun refreshToken(@Body request: RefreshRequest): Call<LoginResponse>
+
+    @GET("api/ranking/")
+    suspend fun getTopRanking(
+        @Query("tipo_residuo") tipoResiduo: String? = null
+    ): Response<List<RankingEntry>>
+
+    @GET("api/ranking/posicion/")
+    suspend fun getUserPosition(
+        @Query("id_usuario") userId: Int,
+        @Query("tipo_residuo") tipoResiduo: String? = null
+    ): Response<PositionResponse>
 }
 

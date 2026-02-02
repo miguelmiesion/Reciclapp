@@ -22,6 +22,7 @@ import com.example.reciclapp.components.ResultPopup
 import com.example.reciclapp.network.TokenManager
 import isTokenValid
 import com.example.reciclapp.views.RankingScreen
+import com.example.reciclapp.views.StoreScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,6 +67,9 @@ class MainActivity : ComponentActivity() {
                                 RankingScreen(navController)
                             }
 
+                            composable("store_screen") {
+                                StoreScreen(navController)
+                            }
                         }
 
                         popupController.currentResult?.let { result ->

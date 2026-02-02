@@ -34,5 +34,10 @@ interface ReciclappApi {
         @Query("id_usuario") userId: Int,
         @Query("tipo_residuo") tipoResiduo: String? = null
     ): Response<UserPositionResponse>
+
+    @GET("api/puntos/")
+    suspend fun getUserPoints(
+        @Query("id_usuario") userId: Int? = null
+    ) : Response<UserPointsResponse>
 }
 

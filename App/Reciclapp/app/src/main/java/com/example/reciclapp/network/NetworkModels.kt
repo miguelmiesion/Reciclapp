@@ -46,3 +46,7 @@ data class RankingEntry(
 data class UserPositionResponse(
     val posicion: Int,
 )
+
+data class UserPointsResponse(
+    val puntos : Int,
+)

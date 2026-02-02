@@ -1,6 +1,7 @@
 package com.example.reciclapp.views
 
 import android.app.AlertDialog
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +35,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.reciclapp.components.CommonUI
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.network.TokenManager
@@ -43,6 +46,8 @@ import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.LoginRequest
 import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.repository.AuthRepository
+import com.example.reciclapp.viewmodels.AuthViewModel
+import com.example.reciclapp.viewmodels.AuthViewModelFactory
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -51,14 +56,33 @@ fun LoginScreen(navController: NavController) {
     val tokenManager = remember { TokenManager(context) }
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
 
+    val viewModel : AuthViewModel = viewModel(
+    factory = AuthViewModelFactory(authRepository, tokenManager)
+    )
+
+    val uiState by viewModel.uiState.collectAsState()
+
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    var isLoading by remember { mutableStateOf(false) }
     val isFormValid = username.isNotBlank() && password.isNotBlank()
 
     val popupController = LocalPopupState.current
+
+    LaunchedEffect(uiState.isLoginSuccess) {
+        if (uiState.isLoginSuccess) {
+            navController.navigate("home_screen") {
+                popUpTo("login_screen") { inclusive = true }
+            }
+        }
+    }
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null) {
+            popupController.showError(uiState.error ?: "Error desconocido")
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -187,27 +211,9 @@ fun LoginScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                    isLoading = true
-
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val result = authRepository.login(LoginRequest(username.lowercase(), password))
-
-                        withContext(Dispatchers.Main) {
-                            isLoading = false
-                            when (result) {
-                                is NetworkResult.Success -> {
-                                    val data = result.data!!
-                                    tokenManager.saveTokens(data.access, data.refresh)
-                                    navController.navigate("home_screen")
-                                }
-                                is NetworkResult.Error -> {
-                                    popupController.showError(result.message ?: "Error desconocido")
-                                }
-                            }
-                        }
-                    }
+                    viewModel.login(username, password)
                 },
-                enabled = isFormValid && !isLoading,
+                enabled = isFormValid && !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -217,7 +223,7 @@ fun LoginScreen(navController: NavController) {
                 ),
                 shape = RoundedCornerShape(25.dp)
             ) {
-                Text(text = if (!isLoading) "Login" else "Iniciando sesión...", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor)
+                Text(text = if (!uiState.isLoading) "Login" else "Iniciando sesión...", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor)
             }
 
             Spacer(modifier = Modifier.height(24.dp))

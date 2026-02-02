@@ -8,7 +8,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.CardGiftcard
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -85,20 +84,7 @@ fun ReciclappBottomBar(navController: NavController) {
                 }
             )
 
-            BottomBarItem(
-                icon = Icons.Outlined.Person,
-                description = "Perfil",
-                isSelected = currentRoute == "profile_screen",
-                onClick = {
-                    if (currentRoute != "profile_screen") {
-                        navController.navigate("profile_screen") {
-                            popUpTo("home_screen") { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                }
-            )
+
         }
     }
 }

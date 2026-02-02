@@ -50,8 +50,11 @@ import androidx.navigation.NavController
 import com.example.reciclapp.components.ReciclappBottomBar
 
 
+import com.example.reciclapp.components.ProfileDropdown
+import com.example.reciclapp.network.TokenManager
+
 @Composable
-fun ScanQrScreen(navController: NavController) {
+fun ScanQrScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
 
     val scope = rememberCoroutineScope()
@@ -93,12 +96,15 @@ fun ScanQrScreen(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = "Escaneá el QR",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Start)
-            )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Escaneá el QR",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                )
+                ProfileDropdown(navController, tokenManager, Modifier.align(Alignment.CenterEnd))
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

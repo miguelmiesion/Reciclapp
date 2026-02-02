@@ -34,8 +34,11 @@ import com.example.reciclapp.viewmodels.RankingViewModel
 import com.example.reciclapp.viewmodels.RankingViewModelFactory
 import com.example.reciclapp.repository.RankingRepository
 
+import com.example.reciclapp.components.ProfileDropdown
+import com.example.reciclapp.network.TokenManager
+
 @Composable
-fun RankingScreen(navController: NavController) {
+fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
 
     val api = RetrofitClient.getApi(context)
@@ -65,7 +68,15 @@ fun RankingScreen(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text(text = "Ranking", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Ranking",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                )
+                ProfileDropdown(navController, tokenManager, Modifier.align(Alignment.CenterEnd))
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Sumá puntos y superá a otros usuarios en rankings!",

@@ -44,6 +44,8 @@ import com.example.reciclapp.ui.theme.ConfirmGreen
 import com.example.reciclapp.ui.theme.CancelRed
 import com.example.reciclapp.ui.theme.Gold
 import com.example.reciclapp.viewmodels.PointsViewModel
+import com.example.reciclapp.components.ProfileDropdown
+import com.example.reciclapp.network.TokenManager
 
 data class StoreItem(
     val id: Int,
@@ -54,8 +56,9 @@ data class StoreItem(
     val color: Color
 )
 
+
 @Composable
-fun StoreScreen(navController: NavController) {
+fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
     val viewModel: PointsViewModel = viewModel(
         factory = PointsViewModelFactory(RetrofitClient.getApi(context))
@@ -109,29 +112,33 @@ fun StoreScreen(navController: NavController) {
                             fontWeight = FontWeight.Bold
                         )
 
-                        Surface(
-                            color = PointsPillBg,
-                            shape = RoundedCornerShape(50),
-                            modifier = Modifier.wrapContentSize()
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                color = PointsPillBg,
+                                shape = RoundedCornerShape(50),
+                                modifier = Modifier.wrapContentSize()
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Eco,
-                                    contentDescription = null,
-                                    tint = PointsTextGreen,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (state.isLoading) "..." else "${state.userBalance}",
-                                    color = PointsTextGreen,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Eco,
+                                        contentDescription = null,
+                                        tint = PointsTextGreen,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (state.isLoading) "..." else "${state.userBalance}",
+                                        color = PointsTextGreen,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            ProfileDropdown(navController, tokenManager)
                         }
                     }
 

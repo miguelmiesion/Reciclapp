@@ -20,7 +20,6 @@ import com.example.reciclapp.components.PopupController
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.components.ResultPopup
 import com.example.reciclapp.network.TokenManager
-import com.example.reciclapp.views.ProfileScreen
 import isTokenValid
 import com.example.reciclapp.views.RankingScreen
 import com.example.reciclapp.views.StoreScreen
@@ -61,19 +60,15 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable("home_screen") {
-                                ScanQrScreen(navController)
+                                ScanQrScreen(navController, tokenManager)
                             }
 
                             composable("ranking_screen") {
-                                RankingScreen(navController)
+                                RankingScreen(navController, tokenManager)
                             }
 
                             composable("store_screen") {
-                                StoreScreen(navController)
-                            }
-
-                            composable ( "profile_screen" ) {
-                                ProfileScreen(navController, tokenManager)
+                                StoreScreen(navController, tokenManager)
                             }
                         }
 

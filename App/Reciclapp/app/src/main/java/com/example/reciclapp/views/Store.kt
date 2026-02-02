@@ -35,17 +35,15 @@ import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
+import com.example.reciclapp.ui.theme.StoreBackground
+import com.example.reciclapp.ui.theme.DarkerText
+import com.example.reciclapp.ui.theme.PointsPillBg
+import com.example.reciclapp.ui.theme.PointsTextGreen
+import com.example.reciclapp.ui.theme.PriceTextGreen
+import com.example.reciclapp.ui.theme.ConfirmGreen
+import com.example.reciclapp.ui.theme.CancelRed
+import com.example.reciclapp.ui.theme.Gold
 import com.example.reciclapp.viewmodels.PointsViewModel
-
-val StoreBackground = Color(0xFFFAFAFA)
-val FeaturedCardDark = Color(0xFF212121)
-val StandardCardWhite = Color(0xFFFFFFFF)
-val PointsPillBg = Color(0xFFE8F5E9)
-val PointsTextGreen = Color(0xFF2E7D32)
-val PriceTextGreen = Color(0xFF43A047)
-val ConfirmGreen = Color(0xFF388E3C)
-val CancelRed = Color(0xFFE57373)
-val GoldColor = Color(0xFFFFD700)
 
 data class StoreItem(
     val id: Int,
@@ -69,7 +67,7 @@ fun StoreScreen(navController: NavController) {
 
     val featuredItem = StoreItem(0, "Totebag Reciclapp", 9999, true, Icons.Default.ShoppingBag, Color.DarkGray)
     val gridItems = List(4) {
-        StoreItem(it + 1, "Decoración Oro", 9999, false, Icons.Default.WorkspacePremium, GoldColor)
+        StoreItem(it + 1, "Decoración Oro", 9999, false, Icons.Default.WorkspacePremium, Gold)
     }
 
     if (showDialog && selectedItem != null) {
@@ -108,8 +106,7 @@ fun StoreScreen(navController: NavController) {
                         Text(
                             text = "Tienda",
                             fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            fontWeight = FontWeight.Bold
                         )
 
                         Surface(
@@ -156,7 +153,6 @@ fun StoreScreen(navController: NavController) {
                     text = "Items destacados",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
-                    color = Color.Black,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
@@ -186,7 +182,7 @@ fun FeaturedItemCard(item: StoreItem, onClick: () -> Unit) {
             .height(200.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = FeaturedCardDark),
+        colors = CardDefaults.cardColors(containerColor = DarkerText),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -249,7 +245,7 @@ fun StandardItemCard(item: StoreItem, onClick: () -> Unit) {
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = StandardCardWhite),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -276,8 +272,7 @@ fun StandardItemCard(item: StoreItem, onClick: () -> Unit) {
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = Color.Black
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(

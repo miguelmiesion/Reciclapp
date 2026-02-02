@@ -97,7 +97,6 @@ fun ScanQrScreen(navController: NavController) {
                 text = "Escaneá el QR",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
                 modifier = Modifier.align(Alignment.Start)
             )
 
@@ -106,7 +105,7 @@ fun ScanQrScreen(navController: NavController) {
             Text(
                 text = "Reciclaste! Ahora escaneá el código qr del cesto para obtener tus puntos!",
                 fontSize = 14.sp,
-                color = Color.DarkGray,
+                color = Color.Gray,
                 lineHeight = 20.sp,
                 modifier = Modifier.align(Alignment.Start)
             )
@@ -256,38 +255,7 @@ fun QrOverlay() {
     }
 }
 
-@Composable
-fun ReciclappBottomBar() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp)
-            .height(70.dp)
-            .clip(RoundedCornerShape(35.dp))
-            .background(Color(0xFFA5D6A7))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Tag, "Menu", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
-            Icon(Icons.Outlined.CalendarToday, "Calendario", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Outlined.CameraAlt, "Escanear", tint = Color.White, modifier = Modifier.size(32.dp))
-            }
-            Icon(Icons.Outlined.CardGiftcard, "Premios", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
-            Icon(Icons.Outlined.Person, "Perfil", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
-        }
-    }
 
-}
 fun playSound(context: android.content.Context) {
     try {
         val mp = MediaPlayer.create(context, R.raw.neo_geo_coin)

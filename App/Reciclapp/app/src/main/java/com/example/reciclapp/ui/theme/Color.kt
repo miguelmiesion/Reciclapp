@@ -17,3 +17,16 @@ val DarkerText = Color(0xFF212121)
 
 val ErrorColor = Color(0xFFEE6868)
 val SuccessColor = Color(0xFF72FF99)
+
+// Ranking & Rewards
+val Gold = Color(0xFFFFD700)
+val Silver = Color(0xFFC0C0C0)
+val Bronze = Color(0xFFCD7F32)
+
+// Store
+val StoreBackground = Color(0xFFFAFAFA)
+val PointsPillBg = Color(0xFFE8F5E9)
+val PointsTextGreen = Color(0xFF2E7D32)
+val PriceTextGreen = Color(0xFF43A047)
+val ConfirmGreen = Color(0xFF388E3C)
+val CancelRed = Color(0xFFE57373)

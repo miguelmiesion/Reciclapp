@@ -25,15 +25,14 @@ import androidx.navigation.NavController
 import com.example.reciclapp.components.ReciclappBottomBar
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.ui.theme.DarkerPrimary
+import com.example.reciclapp.ui.theme.Primary
+import com.example.reciclapp.ui.theme.TextColor
+import com.example.reciclapp.ui.theme.Gold
+import com.example.reciclapp.ui.theme.Silver
+import com.example.reciclapp.ui.theme.Bronze
 import com.example.reciclapp.viewmodels.RankingViewModel
 import com.example.reciclapp.viewmodels.RankingViewModelFactory
 import com.example.reciclapp.repository.RankingRepository
-
-val CardDarkBackground = Color(0xFF424242)
-val MyPositionGreen = Color(0xFFA5D6A7)
-val Gold = Color(0xFFFFD700)
-val Silver = Color(0xFFC0C0C0)
-val Bronze = Color(0xFFCD7F32)
 
 @Composable
 fun RankingScreen(navController: NavController) {
@@ -91,7 +90,7 @@ fun RankingScreen(navController: NavController) {
                     .weight(1f)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardDarkBackground)
+                colors = CardDefaults.cardColors(containerColor = TextColor)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     if (state.isLoading && state.topUsers.isEmpty()) {
@@ -127,7 +126,7 @@ fun RankingScreen(navController: NavController) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardDarkBackground)
+                    colors = CardDefaults.cardColors(containerColor = TextColor)
                 ) {
                     Box(modifier = Modifier.padding(12.dp)) {
                         RankingItem(
@@ -187,7 +186,7 @@ fun RankingItem(rank: Int, username: String, points: Int?, isCurrentUser: Boolea
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(if (isCurrentUser) MyPositionGreen else Color.White)
+            .background(if (isCurrentUser) Primary else Color.White)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -47,9 +47,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun RegisterScreen(navController: NavController) {
+fun RegisterScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
-    val tokenManager = remember { TokenManager(context) }
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
 
     val viewModel : AuthViewModel = viewModel(

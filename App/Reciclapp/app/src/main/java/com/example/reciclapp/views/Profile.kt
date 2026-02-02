@@ -1,6 +1,9 @@
 package com.example.reciclapp.views
 
+import android.annotation.SuppressLint
+import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -9,9 +12,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.reciclapp.MainActivity
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.components.ReciclappBottomBar
 import com.example.reciclapp.network.RetrofitClient
@@ -21,11 +27,10 @@ import com.example.reciclapp.viewmodels.AuthViewModel
 import com.example.reciclapp.viewmodels.AuthViewModelFactory
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
 
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
-    val tokenManager = TokenManager(context)
 
     val viewModel : AuthViewModel = viewModel(
         factory = AuthViewModelFactory(authRepository, tokenManager)
@@ -37,8 +42,12 @@ fun ProfileScreen(navController: NavController) {
 
     LaunchedEffect(uiState.isLogoutSuccess) {
         if (uiState.isLogoutSuccess) {
+            val intent = Intent(context, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(intent)
+
             navController.navigate("login_screen") {
-                popUpTo("login_screen") { inclusive = true }
+                popUpTo(0) { inclusive = true }
             }
         }
     }
@@ -50,10 +59,10 @@ fun ProfileScreen(navController: NavController) {
     }
 
     Scaffold(
-        bottomBar = { ReciclappBottomBar(navController) },
+        bottomBar = { ReciclappBottomBar(navController) }
     ) {
         Button(
-            onClick = {viewModel.logout()}
+            onClick = { viewModel.logout() }
         ) {
             Text(text = "Cerrar sesión")
         }

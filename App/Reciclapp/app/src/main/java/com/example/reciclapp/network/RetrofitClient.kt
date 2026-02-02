@@ -14,7 +14,7 @@ object RetrofitClient {
     fun getApi(context: Context): ReciclappApi {
         if (apiInstance != null) return apiInstance!!
 
-        val tokenManager = TokenManager(context)
+        val tokenManager = TokenManager.getInstance(context)
         val authInterceptor = AuthInterceptor(tokenManager)
 
         val authenticator = TokenAuthenticator(context, tokenManager)

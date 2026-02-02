@@ -78,13 +78,13 @@ class AuthViewModel(private val repository: AuthRepository, private val tokenMan
 
             when (val result = repository.logout(request)) {
                 is NetworkResult.Success -> {
-                    tokenManager.clearTokens()
                     _uiState.update { it.copy(isLogoutSuccess = true, isLoading = false) }
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(error = result.message ?: "Error de cierre de sesión", isLoading = false) }
                 }
             }
+            tokenManager.clearTokens()
         }
     }
 

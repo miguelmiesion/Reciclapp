@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val tokenManager = TokenManager(applicationContext)
+        val tokenManager = TokenManager.getInstance(applicationContext)
 
         val startDestination = if (isTokenValid(tokenManager.getAccessToken()) || isTokenValid(tokenManager.getRefreshToken())) {
             "home_screen"
@@ -53,11 +53,11 @@ class MainActivity : ComponentActivity() {
                             startDestination = startDestination
                         ) {
                             composable("register_screen") {
-                                RegisterScreen(navController)
+                                RegisterScreen(navController, tokenManager)
                             }
 
                             composable("login_screen") {
-                                LoginScreen(navController)
+                                LoginScreen(navController, tokenManager)
                             }
 
                             composable("home_screen") {
@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable ( "profile_screen" ) {
-                                ProfileScreen(navController)
+                                ProfileScreen(navController, tokenManager)
                             }
                         }
 

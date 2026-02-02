@@ -8,7 +8,17 @@ import androidx.security.crypto.MasterKey
 import androidx.core.content.edit
 import java.io.File
 
-class TokenManager(private val context: Context) {
+class TokenManager private constructor(private val context: Context) {
+
+    companion object {
+        @Volatile
+        private var instance: TokenManager? = null
+
+        fun getInstance(context : Context) =
+            instance ?: synchronized(this) {
+                instance ?: TokenManager(context).also { instance = it }
+            }
+    }
 
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)

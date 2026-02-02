@@ -51,9 +51,8 @@ import com.example.reciclapp.viewmodels.AuthViewModelFactory
 import kotlinx.coroutines.withContext
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
-    val tokenManager = remember { TokenManager(context) }
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
 
     val viewModel : AuthViewModel = viewModel(

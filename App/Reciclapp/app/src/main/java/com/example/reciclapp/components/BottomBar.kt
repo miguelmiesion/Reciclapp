@@ -6,94 +6,123 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tag
-import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.reciclapp.ui.theme.Primary
 
 @Composable
 fun ReciclappBottomBar(navController: NavController) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(24.dp)
             .height(70.dp)
             .clip(RoundedCornerShape(35.dp))
-            .background(Color(0xFFA5D6A7)) // El verde claro de tu diseño
+            .background(Color(0xFFA5D6A7)) // Background color from your design
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // --- BOTÓN DE RANKING---
-            Icon(
-                imageVector = Icons.Default.Tag,
-                contentDescription = "Ranking",
-                tint = Color(0xFF424242),
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable {
-                        // Navega a la pantalla de ranking
-                        navController.navigate("ranking_screen") {
-                            // Opcional: Para no apilar pantallas infinitamente
+            BottomBarItem(
+                icon = Icons.Outlined.CameraAlt,
+                description = "Escanear",
+                isSelected = currentRoute == "home_screen",
+                onClick = {
+                    if (currentRoute != "home_screen") {
+                        navController.navigate("home_screen") {
                             popUpTo("home_screen") { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     }
+                }
             )
-            Icon(Icons.Outlined.CalendarToday, "Calendario", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
 
-            // Botón Central (Home / Escanear)
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Primary)
-                    .clickable {
-                        // Evita recargar si ya estás en home
-                        if (navController.currentDestination?.route != "home_screen") {
-                            navController.navigate("home_screen")
+            BottomBarItem(
+                icon = Icons.Default.Tag,
+                description = "Ranking",
+                isSelected = currentRoute == "ranking_screen",
+                onClick = {
+                    if (currentRoute != "ranking_screen") {
+                        navController.navigate("ranking_screen") {
+                            popUpTo("home_screen") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Outlined.CameraAlt, "Escanear", tint = Color.White, modifier = Modifier.size(32.dp))
-            }
-
-            // --- BOTÓN DE PREMIOS ---
-            Icon(Icons.Outlined.CardGiftcard, "Premios", tint = Color(0xFF424242), modifier = Modifier.size(28.dp)
-                .clickable {
-                    // Navega a la pantalla de ranking
-                    navController.navigate("store_screen") {
-                        // Opcional: Para no apilar pantallas infinitamente
-                        popUpTo("home_screen") { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 }
             )
 
-            // Perfil (sin acción definida aún)
-            Icon(Icons.Outlined.Person, "Perfil", tint = Color(0xFF424242), modifier = Modifier.size(28.dp)                .clickable {
-                // Navega a la pantalla de ranking
-                navController.navigate("profile_screen") {
-                    // Opcional: Para no apilar pantallas infinitamente
-                    popUpTo("home_screen") { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
+            BottomBarItem(
+                icon = Icons.Outlined.CardGiftcard,
+                description = "Premios",
+                isSelected = currentRoute == "store_screen",
+                onClick = {
+                    if (currentRoute != "store_screen") {
+                        navController.navigate("store_screen") {
+                            popUpTo("home_screen") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
                 }
-            })
+            )
+
+            BottomBarItem(
+                icon = Icons.Outlined.Person,
+                description = "Perfil",
+                isSelected = currentRoute == "profile_screen",
+                onClick = {
+                    if (currentRoute != "profile_screen") {
+                        navController.navigate("profile_screen") {
+                            popUpTo("home_screen") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                }
+            )
         }
+    }
+}
+
+@Composable
+fun BottomBarItem(
+    icon: ImageVector,
+    description: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (isSelected) Primary else Color.Transparent) // Highlight background if selected
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = description,
+            tint = if (isSelected) Color.White else Color(0xFF424242), // White icon if selected, Dark Gray if not
+            modifier = Modifier.size(28.dp)
+        )
     }
 }

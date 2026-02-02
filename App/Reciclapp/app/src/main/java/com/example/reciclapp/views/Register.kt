@@ -1,5 +1,6 @@
 package com.example.reciclapp.views
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,15 +28,19 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.reciclapp.components.CommonUI
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.SignupRequest
+import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.repository.AuthRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.LightTextColor
+import com.example.reciclapp.viewmodels.AuthViewModel
+import com.example.reciclapp.viewmodels.AuthViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,9 +49,15 @@ import kotlinx.coroutines.withContext
 @Composable
 fun RegisterScreen(navController: NavController) {
     val context = LocalContext.current
-    val popupController = LocalPopupState.current
-
+    val tokenManager = remember { TokenManager(context) }
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
+
+    val viewModel : AuthViewModel = viewModel(
+        factory = AuthViewModelFactory(authRepository, tokenManager)
+    )
+    val uiState by viewModel.uiState.collectAsState()
+
+    val popupController = LocalPopupState.current
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -54,12 +65,26 @@ fun RegisterScreen(navController: NavController) {
 
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
 
     val isPasswordLengthValid = password.length >= 6
     val isPasswordComplex = password.any { it.isDigit() } && password.any { it.isUpperCase() }
     val doPasswordsMatch = password == confirmPassword && password.isNotEmpty()
     val isFormValid = username.isNotEmpty() && isPasswordLengthValid && isPasswordComplex && doPasswordsMatch
+
+    LaunchedEffect(uiState.isRegisterSuccess) {
+        if (uiState.isRegisterSuccess) {
+            navController.navigate("home_screen") {
+                popUpTo("login_screen") { inclusive = true }
+            }
+        }
+    }
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null) {
+            Log.e("ERROR", uiState.toString())
+            popupController.showError(uiState.error ?: "Error desconocido")
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -193,28 +218,9 @@ fun RegisterScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                    isLoading = true
-
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val result = authRepository.signup(SignupRequest(username.lowercase(), password))
-
-                        withContext(Dispatchers.Main) {
-                            when (result) {
-                                is NetworkResult.Success -> {
-                                    popupController.showSuccess("Te registraste con éxito!")
-                                    navController.navigate("login_screen") {
-                                        popUpTo("register_screen") { inclusive = true }
-                                    }
-                                }
-                                is NetworkResult.Error -> {
-                                    popupController.showError(result.message ?: "Error desconocido")
-                                }
-                            }
-                            isLoading = false
-                        }
-                    }
+                    viewModel.register(username, password)
                 },
-                enabled = isFormValid && !isLoading,
+                enabled = isFormValid && !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -224,7 +230,7 @@ fun RegisterScreen(navController: NavController) {
                 ),
                 shape = RoundedCornerShape(25.dp)
             ) {
-                Text(text = if (!isLoading) "Registrar" else "Registrando..." , fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor) }
+                Text(text = if (!uiState.isLoading) "Registrar" else "Registrando..." , fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor) }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

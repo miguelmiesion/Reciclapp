@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.reciclapp.network.LoginRequest
 import com.example.reciclapp.network.LoginResponse
 import com.example.reciclapp.network.NetworkResult
+import com.example.reciclapp.network.SignupRequest
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.repository.AuthRepository
 import com.example.reciclapp.repository.RankingRepository
@@ -43,6 +44,23 @@ class AuthViewModel(private val repository: AuthRepository, private val tokenMan
                     } else {
                         _uiState.update { it.copy(error = result.message, isLoading = false) }
                     }
+                }
+                is NetworkResult.Error -> {
+                    _uiState.update { it.copy(error = result.message ?: "Error desconocido", isLoading = false) }
+                }
+            }
+        }
+    }
+
+    fun register(username: String, password: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            val request = SignupRequest(username, password)
+
+            when (val result = repository.signup(request)) {
+                is NetworkResult.Success -> {
+                    _uiState.update { it.copy(isRegisterSuccess = true, isLoading = false) }
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(error = result.message ?: "Error desconocido", isLoading = false) }

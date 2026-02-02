@@ -17,6 +17,14 @@ data class SignupRequest(
     val password: String
 )
 
+data class LogoutRequest(
+    val refresh: String
+)
+
+data class LogoutResponse(
+    val message: String
+)
+
 data class WasteClaimRequest(
     @SerializedName("id_residuo")
     val idWaste: String

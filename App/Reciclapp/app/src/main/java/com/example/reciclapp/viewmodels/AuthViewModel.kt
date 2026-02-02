@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.reciclapp.network.LoginRequest
 import com.example.reciclapp.network.LoginResponse
+import com.example.reciclapp.network.LogoutRequest
 import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.SignupRequest
 import com.example.reciclapp.network.TokenManager
@@ -64,6 +65,24 @@ class AuthViewModel(private val repository: AuthRepository, private val tokenMan
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(error = result.message ?: "Error desconocido", isLoading = false) }
+                }
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            val request = LogoutRequest(tokenManager.getRefreshToken()!!)
+
+            when (val result = repository.logout(request)) {
+                is NetworkResult.Success -> {
+                    tokenManager.clearTokens()
+                    _uiState.update { it.copy(isLogoutSuccess = true, isLoading = false) }
+                }
+                is NetworkResult.Error -> {
+                    _uiState.update { it.copy(error = result.message ?: "Error de cierre de sesión", isLoading = false) }
                 }
             }
         }

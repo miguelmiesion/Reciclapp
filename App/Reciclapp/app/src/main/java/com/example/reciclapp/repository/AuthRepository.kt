@@ -3,6 +3,8 @@ package com.example.reciclapp.repository
 import com.example.reciclapp.network.BaseApiResponse
 import com.example.reciclapp.network.LoginRequest
 import com.example.reciclapp.network.LoginResponse
+import com.example.reciclapp.network.LogoutRequest
+import com.example.reciclapp.network.LogoutResponse
 import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.SignupRequest
@@ -17,7 +19,7 @@ class AuthRepository(private val api: ReciclappApi) : BaseApiResponse() {
         return safeApiCall { api.signup(request) }
     }
 
-    suspend fun logout(): NetworkResult<Void> {
-        return safeApiCall { api.logout() }
+    suspend fun logout(request: LogoutRequest): NetworkResult<LogoutResponse> {
+        return safeApiCall { api.logout(request) }
     }
 }

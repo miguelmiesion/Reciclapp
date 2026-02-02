@@ -85,7 +85,15 @@ fun ReciclappBottomBar(navController: NavController) {
             )
 
             // Perfil (sin acción definida aún)
-            Icon(Icons.Outlined.Person, "Perfil", tint = Color(0xFF424242), modifier = Modifier.size(28.dp))
+            Icon(Icons.Outlined.Person, "Perfil", tint = Color(0xFF424242), modifier = Modifier.size(28.dp)                .clickable {
+                // Navega a la pantalla de ranking
+                navController.navigate("profile_screen") {
+                    // Opcional: Para no apilar pantallas infinitamente
+                    popUpTo("home_screen") { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            })
         }
     }
 }

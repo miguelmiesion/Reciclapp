@@ -16,7 +16,7 @@ interface ReciclappApi {
     suspend fun claimWaste(@Body request: WasteClaimRequest): Response<Void>
 
     @POST("api/logout/")
-    suspend fun logout(): Response<Void>
+    suspend fun logout(@Body request: LogoutRequest): Response<LogoutResponse>
 
     @POST("api/token/refresh/")
     fun refreshToken(@Body request: RefreshRequest): Call<LoginResponse>

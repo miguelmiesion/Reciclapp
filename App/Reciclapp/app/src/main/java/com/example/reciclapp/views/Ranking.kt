@@ -11,7 +11,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.* // Esto incluye collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,9 +25,9 @@ import androidx.navigation.NavController
 import com.example.reciclapp.components.ReciclappBottomBar
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.ui.theme.DarkerPrimary
-// Importamos el ViewModel desde su archivo correcto
 import com.example.reciclapp.viewmodels.RankingViewModel
 import com.example.reciclapp.viewmodels.RankingViewModelFactory
+import com.example.reciclapp.repository.RankingRepository
 
 val CardDarkBackground = Color(0xFF424242)
 val MyPositionGreen = Color(0xFFA5D6A7)
@@ -38,10 +38,19 @@ val Bronze = Color(0xFFCD7F32)
 @Composable
 fun RankingScreen(navController: NavController) {
     val context = LocalContext.current
+
+    val api = RetrofitClient.getApi(context)
+    val repository = remember { RankingRepository(api) }
+
     val viewModel: RankingViewModel = viewModel(
-        factory = RankingViewModelFactory(RetrofitClient.getApi(context))
+        factory = RankingViewModelFactory(repository)
     )
-    val state = viewModel.uiState
+
+    // --- CORRECCIÓN AQUÍ ---
+    // Antes: val state = viewModel.uiState
+    // Ahora: Usamos 'by' y 'collectAsState()' para escuchar los cambios del Flow
+    val state by viewModel.uiState.collectAsState()
+    // -----------------------
 
     var isFilterMenuExpanded by remember { mutableStateOf(false) }
     val filterOptions = listOf("Todos", "Vidrio", "Carton", "Metal", "Papel")
@@ -100,7 +109,6 @@ fun RankingScreen(navController: NavController) {
                                     rank = index + 1,
                                     username = user.username,
                                     points = user.totalPoints,
-                                    // PINTARTE DE VERDE SI SOS VOS
                                     isCurrentUser = user.username.equals(state.currentUserName, ignoreCase = true)
                                 )
                             }
@@ -124,7 +132,7 @@ fun RankingScreen(navController: NavController) {
                     Box(modifier = Modifier.padding(12.dp)) {
                         RankingItem(
                             rank = pos,
-                            username = "${state.currentUserName} (Vos)",
+                            username = state.currentUserName,
                             points = null,
                             isCurrentUser = true
                         )
@@ -188,9 +196,11 @@ fun RankingItem(rank: Int, username: String, points: Int?, isCurrentUser: Boolea
                 1 -> Icon(Icons.Default.EmojiEvents, null, tint = Gold)
                 2 -> Icon(Icons.Default.EmojiEvents, null, tint = Silver)
                 3 -> Icon(Icons.Default.EmojiEvents, null, tint = Bronze)
-                else -> Text(text = if (rank == 0) "--" else "$rank",
+                else -> Text(
+                    text = if (rank == 0) "--" else "$rank",
                     fontWeight = FontWeight.Bold,
-                    color = Color.Gray)
+                    color = Color.Gray
+                )
             }
         }
         Spacer(modifier = Modifier.width(8.dp))
@@ -211,9 +221,8 @@ fun RankingItem(rank: Int, username: String, points: Int?, isCurrentUser: Boolea
             color = Color.Black,
             modifier = Modifier.weight(1f)
         )
-        Text(text = "|", color = Color.Gray, modifier = Modifier.padding(horizontal = 8.dp))
         Text(
-            text = points?.toString() ?: "- -",
+            text = points?.toString() ?: "",
             fontWeight = FontWeight.Bold,
             color = Color.Black
         )

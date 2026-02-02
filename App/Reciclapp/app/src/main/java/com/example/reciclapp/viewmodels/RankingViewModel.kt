@@ -1,14 +1,16 @@
 package com.example.reciclapp.viewmodels
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.RankingEntry
-import com.example.reciclapp.network.ReciclappApi
+import com.example.reciclapp.repository.RankingRepository
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class RankingUiState(
@@ -22,11 +24,11 @@ data class RankingUiState(
 )
 
 class RankingViewModel(
-    private val api: ReciclappApi
+    private val repository: RankingRepository
 ) : ViewModel() {
 
-    var uiState by mutableStateOf(RankingUiState())
-        private set
+    private val _uiState = MutableStateFlow(RankingUiState())
+    val uiState: StateFlow<RankingUiState> = _uiState.asStateFlow()
 
     init {
         loadInitialData()
@@ -34,80 +36,99 @@ class RankingViewModel(
 
     private fun loadInitialData() {
         viewModelScope.launch {
-            uiState = uiState.copy(isLoading = true)
-            try {
-                // 1. Perfil
-                val profileResponse = api.getUserProfile()
-                if (profileResponse.isSuccessful && profileResponse.body() != null) {
-                    val user = profileResponse.body()!!
-                    val nombreLimpio = user.username.trim()
+            // Actualizamos estado con .update
+            _uiState.update { it.copy(isLoading = true) }
 
-                    uiState = uiState.copy(
-                        currentUserId = user.id,
-                        currentUserName = nombreLimpio
-                    )
+            when (val result = repository.getUserProfile()) {
+                is NetworkResult.Success -> {
+                    val user = result.data
+                    if (user != null) {
+                        val nombreLimpio = user.username.trim()
 
-                    // 2. Ranking
-                    fetchRankings(user.id, uiState.currentFilter, nombreLimpio)
-                } else {
-                    uiState = uiState.copy(isLoading = false, error = "Fallo perfil")
+                        _uiState.update {
+                            it.copy(
+                                currentUserId = user.id,
+                                currentUserName = nombreLimpio
+                            )
+                        }
+
+                        fetchRankings(user.id, _uiState.value.currentFilter, nombreLimpio)
+                    } else {
+                        _uiState.update {
+                            it.copy(isLoading = false, error = "Datos de usuario vacíos")
+                        }
+                    }
                 }
-            } catch (e: Exception) {
-                uiState = uiState.copy(isLoading = false, error = e.message)
+                is NetworkResult.Error -> {
+                    _uiState.update {
+                        it.copy(isLoading = false, error = result.message)
+                    }
+                }
             }
         }
     }
 
     fun updateFilter(newFilter: String?) {
-        if (uiState.currentFilter != newFilter) {
-            uiState = uiState.copy(currentFilter = newFilter)
-            uiState.currentUserId?.let { userId ->
-                viewModelScope.launch { fetchRankings(userId, newFilter, uiState.currentUserName) }
+
+        if (_uiState.value.currentFilter != newFilter) {
+
+            _uiState.update { it.copy(currentFilter = newFilter) }
+
+            _uiState.value.currentUserId?.let { userId ->
+                viewModelScope.launch {
+                    fetchRankings(userId, newFilter, _uiState.value.currentUserName)
+                }
             }
         }
     }
 
     private suspend fun fetchRankings(userId: Int, filter: String?, miNombre: String) {
-        try {
-            val topDeferred = viewModelScope.async { api.getTopRanking(filter) }
-            val posDeferred = viewModelScope.async { api.getUserPosition(userId, filter) }
+        val topDeferred = viewModelScope.async { repository.getTopRanking(filter) }
+        val posDeferred = viewModelScope.async { repository.getUserPosition(userId, filter) }
 
-            val topResponse = topDeferred.await()
-            val posResponse = posDeferred.await()
+        val topResult = topDeferred.await()
+        val posResult = posDeferred.await()
 
-            if (topResponse.isSuccessful && posResponse.isSuccessful) {
-                val rawList = topResponse.body() ?: emptyList()
+        if (topResult is NetworkResult.Success && posResult is NetworkResult.Success) {
+            val rawList = topResult.data ?: emptyList()
+            val userPosData = posResult.data
 
-                // 1. ORDENAMOS Z-A (Visualmente correcto)
-                val listaOrdenada = rawList.sortedWith(
-                    compareByDescending<RankingEntry> { it.totalPoints }
-                        .thenByDescending { it.username }
-                )
+            // Lógica de ordenamiento Z-A y búsqueda
+            val listaOrdenada = rawList.sortedWith(
+                compareByDescending<RankingEntry> { it.totalPoints }
+                    .thenByDescending { it.username }
+            )
 
-                // 2. BUSCAMOS TU INDICE (La lógica que arregló el 7 vs 4)
-                val index = listaOrdenada.indexOfFirst {
-                    it.username.trim().equals(miNombre, ignoreCase = true)
-                }
+            val index = listaOrdenada.indexOfFirst {
+                it.username.trim().equals(miNombre, ignoreCase = true)
+            }
 
-                // 3. SOBRESCRIBIMOS POSICIÓN
-                val posFinal = if (index != -1) (index + 1) else posResponse.body()?.posicion
+            val posFinal = if (index != -1) (index + 1) else userPosData?.posicion
 
-                uiState = uiState.copy(
+            _uiState.update {
+                it.copy(
                     isLoading = false,
                     topUsers = listaOrdenada,
                     userPosition = posFinal
                 )
-            } else {
-                uiState = uiState.copy(isLoading = false, error = "Error API")
             }
-        } catch (e: Exception) {
-            uiState = uiState.copy(isLoading = false, error = e.message)
+        } else {
+            val errorMsg = if (topResult is NetworkResult.Error) topResult.message
+            else (posResult as? NetworkResult.Error)?.message ?: "Error desconocido"
+
+            _uiState.update {
+                it.copy(isLoading = false, error = errorMsg)
+            }
         }
     }
 }
 
-class RankingViewModelFactory(private val api: ReciclappApi) : ViewModelProvider.Factory {
+class RankingViewModelFactory(private val repository: RankingRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return RankingViewModel(api) as T
+        if (modelClass.isAssignableFrom(RankingViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return RankingViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

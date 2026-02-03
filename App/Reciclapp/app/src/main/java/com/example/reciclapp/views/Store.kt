@@ -1,5 +1,7 @@
 package com.example.reciclapp.views
 
+import RewardsRepository
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -33,7 +35,6 @@ import androidx.navigation.NavController
 import com.example.reciclapp.components.ReciclappBottomBar
 import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.RetrofitClient
-import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.StoreBackground
 import com.example.reciclapp.ui.theme.DarkerText
@@ -46,6 +47,9 @@ import com.example.reciclapp.ui.theme.Gold
 import com.example.reciclapp.viewmodels.PointsViewModel
 import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.network.TokenManager
+// Imports necesarios para la DB
+import com.example.reciclapp.database.ReciclappDatabase
+
 
 data class StoreItem(
     val id: Int,
@@ -56,21 +60,24 @@ data class StoreItem(
     val color: Color
 )
 
-
 @Composable
 fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
+    // 1. Obtenemos el contexto actual para pasar a la DB
     val context = LocalContext.current
+
+    // 2. Pasamos el contexto a la Factory actualizada
     val viewModel: PointsViewModel = viewModel(
-        factory = PointsViewModelFactory(RetrofitClient.getApi(context))
+        factory = PointsViewModelFactory(context, RetrofitClient.getApi(context))
     )
+
     val state by viewModel.uiState.collectAsState()
 
     var showDialog by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<StoreItem?>(null) }
 
-    val featuredItem = StoreItem(0, "Totebag Reciclapp", 9999, true, Icons.Default.ShoppingBag, Color.DarkGray)
+    val featuredItem = StoreItem(0, "Totebag Reciclapp", 500, true, Icons.Default.ShoppingBag, Color.DarkGray)
     val gridItems = List(4) {
-        StoreItem(it + 1, "Decoración Oro", 9999, false, Icons.Default.WorkspacePremium, Gold)
+        StoreItem(it + 1, "Decoración Oro", 200, false, Icons.Default.WorkspacePremium, Gold)
     }
 
     if (showDialog && selectedItem != null) {
@@ -78,6 +85,8 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
             item = selectedItem!!,
             onDismiss = { showDialog = false },
             onConfirm = {
+                // 3. Ejecutamos la transacción real
+                viewModel.redeemItem(selectedItem!!.price, selectedItem!!.name)
                 showDialog = false
             }
         )
@@ -134,6 +143,7 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
+                                        // Ahora este valor se actualiza automáticamente al comprar
                                         text = if (state.isLoading) "..." else "${state.userBalance}",
                                         color = PointsTextGreen,
                                         fontWeight = FontWeight.Bold,
@@ -185,6 +195,7 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
     }
 }
 
+// ... (FeaturedItemCard y StandardItemCard quedan igual, se omiten por brevedad si ya los tienes) ...
 @Composable
 fun FeaturedItemCard(item: StoreItem, onClick: () -> Unit) {
     Card(
@@ -333,7 +344,6 @@ fun RedeemConfirmationDialog(item: StoreItem, onDismiss: () -> Unit, onConfirm: 
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = ConfirmGreen),
                 shape = RoundedCornerShape(8.dp)
-                // Removed invalid Modifier.weight(1f)
             ) {
                 Text("Canjear", color = Color.White, fontWeight = FontWeight.Bold)
             }
@@ -343,7 +353,6 @@ fun RedeemConfirmationDialog(item: StoreItem, onDismiss: () -> Unit, onConfirm: 
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(containerColor = CancelRed),
                 shape = RoundedCornerShape(8.dp)
-                // Removed invalid Modifier.weight(1f)
             ) {
                 Text("No", color = Color.White, fontWeight = FontWeight.Bold)
             }
@@ -354,12 +363,21 @@ fun RedeemConfirmationDialog(item: StoreItem, onDismiss: () -> Unit, onConfirm: 
     )
 }
 
-class PointsViewModelFactory(private val api: ReciclappApi) : ViewModelProvider.Factory {
+
+class PointsViewModelFactory(
+    private val context: Context,
+    private val api: ReciclappApi
+) : ViewModelProvider.Factory {
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PointsViewModel::class.java)) {
-            val dummyRepo = RewardsRepository(api)
+            // 1. Obtenemos instancia DB
+            val db = ReciclappDatabase.getDatabase(context)
+            // 2. Creamos el Repositorio Real con DB y API
+            val repository = RewardsRepository(api, db)
+
             @Suppress("UNCHECKED_CAST")
-            return PointsViewModel(dummyRepo) as T
+            return PointsViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

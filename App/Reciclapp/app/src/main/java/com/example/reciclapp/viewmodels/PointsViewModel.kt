@@ -28,17 +28,26 @@ class PointsViewModel(
 
     private fun loadInitialData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val result = repository.getUserBalance()
-
-            result.onSuccess { puntos ->
-                _uiState.update { it.copy(userBalance = puntos) }
-            }.onFailure { error ->
-                _uiState.update { it.copy(error = error.message ?: "Error del servidor") }
-            }
-
-            _uiState.update { it.copy(isLoading = false) }
+            getUserBalance()
         }
     }
 
+    private suspend fun getUserBalance() {
+        _uiState.update { it.copy(isLoading = true) }
+        val result = repository.getUserBalance()
+
+        result.onSuccess { puntos ->
+            _uiState.update { it.copy(userBalance = puntos) }
+        }.onFailure { error ->
+            _uiState.update { it.copy(error = error.message ?: "Error del servidor") }
+        }
+
+        _uiState.update { it.copy(isLoading = false) }
+    }
+
+    fun update() {
+        viewModelScope.launch {
+            getUserBalance()
+        }
+    }
 }

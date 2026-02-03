@@ -36,33 +36,35 @@ class RankingViewModel(
 
     private fun loadInitialData() {
         viewModelScope.launch {
-            // Actualizamos estado con .update
-            _uiState.update { it.copy(isLoading = true) }
+            getUserProfileAndRankings()
+        }
+    }
 
-            when (val result = repository.getUserProfile()) {
-                is NetworkResult.Success -> {
-                    val user = result.data
-                    if (user != null) {
-                        val nombreLimpio = user.username.trim()
+    private suspend fun getUserProfileAndRankings() {
+        _uiState.update { it.copy(isLoading = true) }
+        when (val result = repository.getUserProfile()) {
+            is NetworkResult.Success -> {
+                val user = result.data
+                if (user != null) {
+                    val nombreLimpio = user.username.trim()
 
-                        _uiState.update {
-                            it.copy(
-                                currentUserId = user.id,
-                                currentUserName = nombreLimpio
-                            )
-                        }
+                    _uiState.update {
+                        it.copy(
+                            currentUserId = user.id,
+                            currentUserName = nombreLimpio
+                        )
+                    }
 
-                        fetchRankings(user.id, _uiState.value.currentFilter, nombreLimpio)
-                    } else {
-                        _uiState.update {
-                            it.copy(isLoading = false, error = "Datos de usuario vacíos")
-                        }
+                    fetchRankings(user.id, _uiState.value.currentFilter, nombreLimpio)
+                } else {
+                    _uiState.update {
+                        it.copy(isLoading = false, error = "Datos de usuario vacíos")
                     }
                 }
-                is NetworkResult.Error -> {
-                    _uiState.update {
-                        it.copy(isLoading = false, error = result.message)
-                    }
+            }
+            is NetworkResult.Error -> {
+                _uiState.update {
+                    it.copy(isLoading = false, error = result.message)
                 }
             }
         }
@@ -79,6 +81,12 @@ class RankingViewModel(
                     fetchRankings(userId, newFilter, _uiState.value.currentUserName)
                 }
             }
+        }
+    }
+
+    fun update() {
+        viewModelScope.launch {
+            getUserProfileAndRankings()
         }
     }
 

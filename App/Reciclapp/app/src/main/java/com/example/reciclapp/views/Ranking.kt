@@ -57,6 +57,10 @@ fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
     var isFilterMenuExpanded by remember { mutableStateOf(false) }
     val filterOptions = listOf("Todos", "Vidrio", "Carton", "Metal", "Papel")
 
+    LaunchedEffect(Unit) {
+        viewModel.update()
+    }
+
     Scaffold(
         bottomBar = { ReciclappBottomBar(navController) }
     ) { paddingValues ->

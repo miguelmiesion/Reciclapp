@@ -83,6 +83,10 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
         )
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.update()
+    }
+
     Scaffold(
         bottomBar = { ReciclappBottomBar(navController) },
         containerColor = StoreBackground

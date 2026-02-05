@@ -1,19 +1,24 @@
 package com.example.reciclapp.viewmodels
 
+import android.content.Context
+import android.location.Location
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.Station
 import com.example.reciclapp.repository.MapsRepository
-import com.example.reciclapp.repository.RankingRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.osmdroid.util.GeoPoint
 
 data class MapsUiState (
     val stations : List<Station> = emptyList(),
+    val routePoints: List<GeoPoint>? = null,
+    val currentAddress: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -27,18 +32,76 @@ class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
     }
 
     private fun loadInitialData() {
+        fetchStations()
+    }
+
+    fun fetchStations() {
         viewModelScope.launch {
-            fetchStations()
+            _uiState.update { it.copy(isLoading = true, error = null) } // Limpiamos errores previos
+            try {
+                when(val result = repository.getStations()) {
+                    is NetworkResult.Success -> {
+                        _uiState.update { it.copy(stations = result.data ?: emptyList(), isLoading = false) }
+                    }
+                    is NetworkResult.Error -> {
+                        _uiState.update { it.copy(error = result.message ?: "Error al cargar estaciones", isLoading = false) }
+                    }
+                }
+            } catch (e: Exception) {
+                // Captura de emergencia por si el repositorio crashea antes de devolver NetworkResult
+                _uiState.update { it.copy(error = e.message, isLoading = false) }
+            }
         }
     }
 
-    suspend fun fetchStations() {
-        when(val result = repository.getStations()) {
-            is NetworkResult.Success -> {
-                _uiState.update { it.copy(stations = result.data ?: emptyList(), isLoading = false) }
+    fun drawRouteToStation(userLocation: GeoPoint, station: Station) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            try {
+                val endPoint = GeoPoint(station.latitude, station.longitude)
+
+                // Calculamos la ruta
+                val points = repository.calculateRoute(userLocation, endPoint)
+
+                if (points.isNullOrEmpty()) {
+                    _uiState.update {
+                        it.copy(
+                            error = "No se pudo encontrar una ruta (Verifica tu conexión)",
+                            isLoading = false
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            routePoints = points,
+                            isLoading = false
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                // EVITA EL CRASH
+                Log.e("MapsViewModel", "Error calculando ruta", e)
+                _uiState.update {
+                    it.copy(
+                        error = "Error de conexión al calcular ruta: ${e.localizedMessage}",
+                        isLoading = false
+                    )
+                }
             }
-            is NetworkResult.Error -> {
-                _uiState.update { it.copy(error = result.message ?: "Error desconocido", isLoading = false) }
+        }
+    }
+
+    fun resolveAddressForLocation(geoPoint: GeoPoint) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(currentAddress = null) }
+
+            // 2. Pedimos la dirección al repositorio
+            val address = repository.getAddress(geoPoint)
+
+            // 3. Actualizamos el estado con el resultado (o un texto por defecto si falló)
+            _uiState.update {
+                it.copy(currentAddress = address ?: "Dirección no encontrada")
             }
         }
     }

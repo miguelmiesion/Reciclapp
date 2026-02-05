@@ -67,6 +67,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.animation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -105,4 +107,6 @@ dependencies {
     ksp("androidx.room:room-compiler:2.5.0")
 
     implementation("org.osmdroid:osmdroid-android:6.1.0")
+
+    implementation("com.github.MKergall:osmbonuspack:6.9.0")
 }

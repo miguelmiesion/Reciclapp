@@ -32,24 +32,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+
 import com.example.reciclapp.components.ReciclappBottomBar
+import com.example.reciclapp.components.ProfileDropdown
+import com.example.reciclapp.components.LocalPopupState
+import com.example.reciclapp.components.ResultPopup
+import com.example.reciclapp.viewmodels.PointsViewModel
 import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.RetrofitClient
-import com.example.reciclapp.ui.theme.DarkerPrimary
-import com.example.reciclapp.ui.theme.StoreBackground
-import com.example.reciclapp.ui.theme.DarkerText
-import com.example.reciclapp.ui.theme.PointsPillBg
-import com.example.reciclapp.ui.theme.PointsTextGreen
-import com.example.reciclapp.ui.theme.PriceTextGreen
-import com.example.reciclapp.ui.theme.ConfirmGreen
-import com.example.reciclapp.ui.theme.CancelRed
-import com.example.reciclapp.ui.theme.Gold
-import com.example.reciclapp.viewmodels.PointsViewModel
-import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.network.TokenManager
-// Imports necesarios para la DB
 import com.example.reciclapp.database.ReciclappDatabase
-
+import com.example.reciclapp.ui.theme.*
 
 data class StoreItem(
     val id: Int,
@@ -57,44 +50,65 @@ data class StoreItem(
     val price: Int,
     val isFeatured: Boolean,
     val icon: ImageVector,
-    val color: Color
+    val color: Color,
+    val isOwned: Boolean = false
 )
 
 @Composable
 fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
-    // 1. Obtenemos el contexto actual para pasar a la DB
     val context = LocalContext.current
+    val popupController = LocalPopupState.current
 
-    // 2. Pasamos el contexto a la Factory actualizada
     val viewModel: PointsViewModel = viewModel(
         factory = PointsViewModelFactory(context, RetrofitClient.getApi(context))
     )
 
     val state by viewModel.uiState.collectAsState()
+    val ownedItemsIds = remember { mutableStateListOf<Int>() }
 
-    var showDialog by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<StoreItem?>(null) }
 
+    // Datos
     val featuredItem = StoreItem(0, "Totebag Reciclapp", 500, true, Icons.Default.ShoppingBag, Color.DarkGray)
-    val gridItems = List(4) {
-        StoreItem(it + 1, "Decoración Oro", 200, false, Icons.Default.WorkspacePremium, Gold)
+    val gridItems = remember {
+        listOf(
+            StoreItem(1, "Decoración Oro", 200, false, Icons.Default.WorkspacePremium, Gold),
+            StoreItem(2, "Badge Reciclador", 150, false, Icons.Default.Eco, Color(0xFF4CAF50)),
+            StoreItem(3, "Icono Premium", 300, false, Icons.Default.WorkspacePremium, Color(0xFF673AB7)),
+            StoreItem(4, "Color Nickname", 100, false, Icons.Default.ShoppingBag, Color(0xFFE91E63))
+        )
     }
 
-    if (showDialog && selectedItem != null) {
+    popupController.currentResult?.let { result ->
+        ResultPopup(result = result, onDismiss = { popupController.dismiss() })
+    }
+
+    if (showConfirmDialog && selectedItem != null) {
         RedeemConfirmationDialog(
             item = selectedItem!!,
-            onDismiss = { showDialog = false },
+            onDismiss = { showConfirmDialog = false },
             onConfirm = {
-                // 3. Ejecutamos la transacción real
-                viewModel.redeemItem(selectedItem!!.price, selectedItem!!.name)
-                showDialog = false
+                val item = selectedItem!!
+                showConfirmDialog = false
+                if (state.userBalance < item.price) {
+                    popupController.showError("Créditos insuficientes.")
+                } else {
+                    viewModel.redeemItem(
+                        itemPrice = item.price,
+                        itemName = item.name,
+                        onSuccess = {
+                            ownedItemsIds.add(item.id)
+                            popupController.showSuccess("¡Canjeado: ${item.name}!")
+                        },
+                        onError = { popupController.showError(it) }
+                    )
+                }
             }
         )
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.update()
-    }
+    LaunchedEffect(Unit) { viewModel.update() }
 
     Scaffold(
         bottomBar = { ReciclappBottomBar(navController) },
@@ -103,8 +117,8 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             contentPadding = PaddingValues(
-                top = paddingValues.calculateTopPadding() + 20.dp,
-                bottom = paddingValues.calculateBottomPadding() + 20.dp,
+                top = paddingValues.calculateTopPadding() + 24.dp,
+                bottom = paddingValues.calculateBottomPadding() + 24.dp,
                 start = 24.dp,
                 end = 24.dp
             ),
@@ -113,147 +127,114 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
             modifier = Modifier.fillMaxSize()
         ) {
             item(span = { GridItemSpan(2) }) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Tienda",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                color = PointsPillBg,
-                                shape = RoundedCornerShape(50),
-                                modifier = Modifier.wrapContentSize()
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Eco,
-                                        contentDescription = null,
-                                        tint = PointsTextGreen,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        // Ahora este valor se actualiza automáticamente al comprar
-                                        text = if (state.isLoading) "..." else "${state.userBalance}",
-                                        color = PointsTextGreen,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            ProfileDropdown(navController, tokenManager)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Canjeá tus puntos por objetos de la tienda, logos, colores y más!",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        lineHeight = 20.sp
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(thickness = 2.dp, color = DarkerPrimary)
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
+                StoreHeader(state.userBalance, state.isLoading, navController, tokenManager)
             }
 
+            // --- SECCIÓN DESTACADOS (Totebag) ---
             item(span = { GridItemSpan(2) }) {
                 Text(
                     text = "Items destacados",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText)
                 )
             }
 
             item(span = { GridItemSpan(2) }) {
-                FeaturedItemCard(item = featuredItem) {
-                    selectedItem = featuredItem
-                    showDialog = true
+                val featuredStatus = featuredItem.copy(isOwned = ownedItemsIds.contains(featuredItem.id))
+                FeaturedItemCard(item = featuredStatus) {
+                    if (featuredStatus.isOwned) {
+                        popupController.showError("Ya tienes este item.")
+                    } else {
+                        selectedItem = featuredStatus
+                        showConfirmDialog = true
+                    }
                 }
             }
 
+            // --- SECCIÓN CATÁLOGO ---
+            item(span = { GridItemSpan(2) }) {
+                Text(
+                    text = "Más para canjear",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText),
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
             items(gridItems) { item ->
-                StandardItemCard(item = item) {
-                    selectedItem = item
-                    showDialog = true
+                val itemStatus = item.copy(isOwned = ownedItemsIds.contains(item.id))
+                StandardItemCard(item = itemStatus) {
+                    if (itemStatus.isOwned) {
+                        popupController.showError("Ya tienes este item.")
+                    } else {
+                        selectedItem = itemStatus
+                        showConfirmDialog = true
+                    }
                 }
             }
         }
     }
 }
 
-// ... (FeaturedItemCard y StandardItemCard quedan igual, se omiten por brevedad si ya los tienes) ...
+@Composable
+fun StoreHeader(balance: Int, isLoading: Boolean, navController: NavController, tokenManager: TokenManager) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Tienda", fontSize = 32.sp, fontWeight = FontWeight.Black, color = DarkerText)
+            Surface(color = PointsPillBg, shape = RoundedCornerShape(50)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Icon(Icons.Default.Eco, null, tint = PointsTextGreen, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = if (isLoading) "..." else "$balance", color = PointsTextGreen, fontWeight = FontWeight.ExtraBold)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    ProfileDropdown(navController, tokenManager)
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.4f))
+    }
+}
+
 @Composable
 fun FeaturedItemCard(item: StoreItem, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(180.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkerText),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (item.isOwned) Color.DarkGray.copy(alpha = 0.8f) else DarkerText
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.LightGray.copy(alpha = 0.5f), Color.White.copy(alpha = 0.8f))
-                        )
-                    )
-                    .align(Alignment.TopCenter),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    tint = Color.DarkGray
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = item.name,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Eco,
-                        contentDescription = null,
-                        tint = PriceTextGreen,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = item.price.toString(),
-                        color = PriceTextGreen,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
+            Icon(
+                imageVector = item.icon,
+                contentDescription = null,
+                modifier = Modifier.size(140.dp).align(Alignment.CenterEnd).padding(end = 10.dp),
+                tint = Color.White.copy(alpha = 0.1f)
+            )
+            Column(modifier = Modifier.align(Alignment.BottomStart).padding(24.dp)) {
+                Text(text = item.name, color = Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                if (item.isOwned) {
+                    Text("Obtenido", color = Color.LightGray, fontWeight = FontWeight.Bold)
+                } else {
+                    Row(
+                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.White.copy(alpha = 0.2f)).padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Eco, null, tint = PriceTextGreen, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "${item.price}", color = PriceTextGreen, fontWeight = FontWeight.Black)
+                    }
                 }
             }
         }
@@ -263,60 +244,38 @@ fun FeaturedItemCard(item: StoreItem, onClick: () -> Unit) {
 @Composable
 fun StandardItemCard(item: StoreItem, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = if (item.isOwned) Color(0xFFF5F5F5) else Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (item.isOwned) 0.dp else 2.dp)
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .background(Color.Transparent),
-                contentAlignment = Alignment.Center
+            Surface(
+                modifier = Modifier.size(70.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = if (item.isOwned) Color.LightGray.copy(alpha = 0.2f) else item.color.copy(alpha = 0.1f)
             ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = item.color
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(item.icon, null, modifier = Modifier.size(36.dp), tint = if (item.isOwned) Color.Gray else item.color)
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = item.name,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(PointsPillBg)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Eco,
-                    contentDescription = null,
-                    tint = PointsTextGreen,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = item.price.toString(),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = PointsTextGreen
-                )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(item.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center, color = if (item.isOwned) Color.Gray else DarkerText, modifier = Modifier.fillMaxWidth())
+            Spacer(modifier = Modifier.height(12.dp))
+            if (item.isOwned) {
+                Text("Obtenido", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.LightGray.copy(alpha = 0.3f)).padding(horizontal = 12.dp, vertical = 4.dp))
+            } else {
+                Row(
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(PointsPillBg).padding(horizontal = 10.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Eco, null, tint = PointsTextGreen, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("${item.price}", fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = PointsTextGreen)
+                }
             }
         }
     }
@@ -326,58 +285,23 @@ fun StandardItemCard(item: StoreItem, onClick: () -> Unit) {
 fun RedeemConfirmationDialog(item: StoreItem, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "¿Confirmás la acción?",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
-        },
+        title = { Text("¿Confirmar canje?", fontWeight = FontWeight.Black, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+        text = { Text("Se descontarán ${item.price} puntos por '${item.name}'.", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
         confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = ConfirmGreen),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("Canjear", color = Color.White, fontWeight = FontWeight.Bold)
+            Button(onClick = onConfirm, colors = ButtonDefaults.buttonColors(containerColor = ConfirmGreen), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                Text("Confirmar", fontWeight = FontWeight.Bold)
             }
         },
-        dismissButton = {
-            Button(
-                onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = CancelRed),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("No", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        },
-        containerColor = Color.White,
-        shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.padding(16.dp)
+        dismissButton = { TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Cancelar", color = Color.Gray) } },
+        containerColor = Color.White, shape = RoundedCornerShape(28.dp)
     )
 }
 
-
-class PointsViewModelFactory(
-    private val context: Context,
-    private val api: ReciclappApi
-) : ViewModelProvider.Factory {
-
+class PointsViewModelFactory(private val context: Context, private val api: ReciclappApi) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PointsViewModel::class.java)) {
-            // 1. Obtenemos instancia DB
             val db = ReciclappDatabase.getDatabase(context)
-            // 2. Creamos el Repositorio Real con DB y API
-            val repository = RewardsRepository(api, db)
-
-            @Suppress("UNCHECKED_CAST")
-            return PointsViewModel(repository) as T
+            return PointsViewModel(RewardsRepository(api, db)) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

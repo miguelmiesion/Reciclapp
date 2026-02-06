@@ -50,6 +50,7 @@ import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.database.ReciclappDatabase
 import com.example.reciclapp.repository.RewardsRepository
 
+import com.example.reciclapp.ui.theme.*
 
 data class StoreItem(
     val id: Int,

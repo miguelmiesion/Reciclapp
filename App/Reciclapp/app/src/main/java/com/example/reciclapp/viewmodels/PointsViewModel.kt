@@ -52,15 +52,17 @@ class PointsViewModel(
         }
     }
 
-    // 3. ACCIÓN DE COMPRA
-    fun redeemItem(itemPrice: Int, itemName: String) {
+    fun redeemItem(itemPrice: Int, itemName: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            // Intentamos registrar la compra en la BD local
             val result = repository.redeemItem(itemPrice, itemName)
 
-            result.onFailure { e ->
-                // Opcional: Podrías exponer este error en un Snackbar
-                println("Error al canjear: ${e.message}")
+            result.onSuccess {
+                refreshData() // Sincronizamos balance local
+                onSuccess()
+            }.onFailure { e ->
+                // Aquí puedes mapear errores específicos, ej: "Créditos insuficientes"
+                val errorMsg = e.message ?: "No se pudo realizar el canje"
+                onError(errorMsg)
             }
         }
     }

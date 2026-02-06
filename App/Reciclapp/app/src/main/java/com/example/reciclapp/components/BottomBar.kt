@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.CardGiftcard
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,6 +47,22 @@ fun ReciclappBottomBar(navController: NavController) {
                 onClick = {
                     if (currentRoute != "home_screen") {
                         navController.navigate("home_screen") {
+                            popUpTo("home_screen") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                }
+            )
+
+            BottomBarItem(
+                icon = Icons.Outlined.Map,
+                description = "Mapa",
+                isSelected = currentRoute == "maps_screen",
+                onClick = {
+                    if (currentRoute != "maps_screen") {
+                        navController.navigate("maps_screen") {
+                            // Mantiene el estado y evita duplicados
                             popUpTo("home_screen") { saveState = true }
                             launchSingleTop = true
                             restoreState = true

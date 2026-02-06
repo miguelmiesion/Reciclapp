@@ -58,3 +58,14 @@ data class UserPositionResponse(
 data class UserPointsResponse(
     val puntos : Int,
 )
+
+
+data class Station(
+    val id: Int,
+    @SerializedName("nombre")
+    val name: String,
+    @SerializedName("latitud")
+    val latitude: Double,
+    @SerializedName("longitud")
+    val longitude: Double
+)

@@ -20,6 +20,7 @@ import com.example.reciclapp.components.PopupController
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.components.ResultPopup
 import com.example.reciclapp.network.TokenManager
+import com.example.reciclapp.views.ProfileScreen
 import com.example.reciclapp.views.MapsScreen
 import isTokenValid
 import com.example.reciclapp.views.RankingScreen
@@ -74,6 +75,10 @@ class MainActivity : ComponentActivity() {
 
                             composable("maps_screen") {
                                 MapsScreen(navController)
+                            }
+
+                            composable("profile_screen") {
+                                ProfileScreen(navController, tokenManager)
                             }
                         }
 

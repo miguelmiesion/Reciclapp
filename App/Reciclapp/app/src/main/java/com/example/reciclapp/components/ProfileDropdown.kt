@@ -38,6 +38,7 @@ import com.example.reciclapp.viewmodels.AuthViewModel
 import com.example.reciclapp.viewmodels.AuthViewModelFactory
 
 import com.example.reciclapp.ui.theme.ErrorColor
+import com.example.reciclapp.ui.theme.TextColor
 
 @Composable
 fun ProfileDropdown(navController: NavController, tokenManager: TokenManager, modifier: Modifier = Modifier) {
@@ -90,6 +91,13 @@ fun ProfileDropdown(navController: NavController, tokenManager: TokenManager, mo
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
+            DropdownMenuItem(
+                text = { Text("Perfil", color = TextColor) },
+                onClick = {
+                    expanded = false
+                    navController.navigate("profile_screen")
+                }
+            )
             DropdownMenuItem(
                 text = { Text("Cerrar sesión", color = ErrorColor) },
                 onClick = {

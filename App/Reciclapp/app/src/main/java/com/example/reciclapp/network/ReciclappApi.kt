@@ -23,7 +23,7 @@ interface ReciclappApi {
 
     @GET("api/ranking/")
     suspend fun getTopRanking(
-        @Query("tipo_residuo") tipoResiduo: String? = null
+        @Query("tipo_residuo") wasteType: String? = null
     ): Response<List<RankingEntry>>
 
     @GET("api/datos_usuario/")
@@ -32,7 +32,7 @@ interface ReciclappApi {
     @GET("api/ranking/posicion/")
     suspend fun getUserPosition(
         @Query("id_usuario") userId: Int,
-        @Query("tipo_residuo") tipoResiduo: String? = null
+        @Query("tipo_residuo") wasteType: String? = null
     ): Response<UserPositionResponse>
 
     @GET("api/puntos/")

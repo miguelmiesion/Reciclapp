@@ -46,16 +46,16 @@ class RankingViewModel(
             is NetworkResult.Success -> {
                 val user = result.data
                 if (user != null) {
-                    val nombreLimpio = user.username.trim()
+                    val trimmedUsername = user.username.trim()
 
                     _uiState.update {
                         it.copy(
                             currentUserId = user.id,
-                            currentUserName = nombreLimpio
+                            currentUserName = trimmedUsername
                         )
                     }
 
-                    fetchRankings(user.id, _uiState.value.currentFilter, nombreLimpio)
+                    fetchRankings(user.id, _uiState.value.currentFilter, trimmedUsername)
                 } else {
                     _uiState.update {
                         it.copy(isLoading = false, error = "Datos de usuario vacíos")
@@ -90,7 +90,7 @@ class RankingViewModel(
         }
     }
 
-    private suspend fun fetchRankings(userId: Int, filter: String?, miNombre: String) {
+    private suspend fun fetchRankings(userId: Int, filter: String?, userName: String) {
         val topDeferred = viewModelScope.async { repository.getTopRanking(filter) }
         val posDeferred = viewModelScope.async { repository.getUserPosition(userId, filter) }
 
@@ -102,21 +102,21 @@ class RankingViewModel(
             val userPosData = posResult.data
 
             // Lógica de ordenamiento Z-A y búsqueda
-            val listaOrdenada = rawList.sortedWith(
+            val sortedList = rawList.sortedWith(
                 compareByDescending<RankingEntry> { it.totalPoints }
                     .thenByDescending { it.username }
             )
 
-            val index = listaOrdenada.indexOfFirst {
-                it.username.trim().equals(miNombre, ignoreCase = true)
+            val index = sortedList.indexOfFirst {
+                it.username.trim().equals(userName, ignoreCase = true)
             }
 
-            val posFinal = if (index != -1) (index + 1) else userPosData?.posicion
+            val posFinal = if (index != -1) (index + 1) else userPosData?.position
 
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    topUsers = listaOrdenada,
+                    topUsers = sortedList,
                     userPosition = posFinal
                 )
             }

@@ -1,6 +1,5 @@
 package com.example.reciclapp.views
 
-import RewardsRepository
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,6 +41,7 @@ import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.database.ReciclappDatabase
+import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.ui.theme.*
 
 data class StoreItem(

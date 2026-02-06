@@ -14,10 +14,10 @@ class RankingRepository(private val api: ReciclappApi) : BaseApiResponse() {
     }
 
     suspend fun getTopRanking(filter: String?): NetworkResult<List<RankingEntry>> {
-        return safeApiCall { api.getTopRanking(tipoResiduo = filter) }
+        return safeApiCall { api.getTopRanking(wasteType = filter) }
     }
 
     suspend fun getUserPosition(userId: Int, filter: String?): NetworkResult<UserPositionResponse> {
-        return safeApiCall { api.getUserPosition(userId = userId, tipoResiduo = filter) }
+        return safeApiCall { api.getUserPosition(userId = userId, wasteType = filter) }
     }
 }

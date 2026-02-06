@@ -138,17 +138,17 @@ fun ScanQrScreen(navController: NavController, tokenManager: TokenManager) {
                                     try {
 
                                         val jsonQr = JSONObject(resultString)
-                                        val idResiduo = jsonQr.getString("ID Residuo")
-                                        val puntos = jsonQr.optInt("Puntos", 0)
+                                        val wasteId = jsonQr.getString("ID Residuo")
+                                        val points = jsonQr.optInt("Puntos", 0)
 
-                                        val result = wasteRepository.claimWaste(idResiduo)
+                                        val result = wasteRepository.claimWaste(wasteId)
 
                                         withContext(Dispatchers.Main) {
                                             when (result) {
                                                 is NetworkResult.Success -> {
 
                                                     playSound(context)
-                                                    popupController.showSuccess("Sumaste $puntos puntos!")
+                                                    popupController.showSuccess("Sumaste $points puntos!")
                                                 }
                                                 is NetworkResult.Error -> {
 

@@ -1,12 +1,16 @@
 package com.example.reciclapp.viewmodels
 
-import RewardsRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.reciclapp.repository.RewardsRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class PointsUiState(
@@ -18,35 +22,33 @@ data class PointsUiState(
 class PointsViewModel(
     private val repository: RewardsRepository
 ) : ViewModel() {
-    val uiState: StateFlow<PointsUiState> = repository.userBalance
-        .map { calculatedBalance ->
-            // Transformamos el Int del repo al objeto de UI
-            PointsUiState(
-                userBalance = calculatedBalance,
-                isLoading = false // Si recibimos dato, ya no estamos cargando
-            )
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000), // Mantiene el estado 5s si la app rota
-            initialValue = PointsUiState(isLoading = true) // Estado inicial mientras carga la DB
-        )
+    private val _uiState = MutableStateFlow(PointsUiState())
+    val uiState: StateFlow<PointsUiState> = _uiState.asStateFlow()
 
     init {
-        // Al iniciar, pedimos datos frescos a la API para actualizar la "Base"
+        viewModelScope.launch {
+            repository.userBalance.collect { points ->
+                _uiState.update { it.copy(userBalance = points) }
+            }
+        }
         refreshData()
     }
 
-    // 2. SINCRONIZACIÓN (Solo pedimos actualizar, no manejamos el resultado UI aquí)
+    // 2. SINCRONIZACIÓN
     fun update() {
         refreshData()
     }
 
     private fun refreshData() {
         viewModelScope.launch {
-            repository.refreshUserBalance()
-            // No necesitamos hacer _uiState.update { ... }
-            // Al guardarse en Room, el bloque 'uiState' de arriba se dispara solo.
+            _uiState.update { it.copy(isLoading = true) }
+            val result = repository.refreshUserBalance()
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message
+                )
+            }
         }
     }
 
@@ -60,8 +62,6 @@ class PointsViewModel(
                 // Opcional: Podrías exponer este error en un Snackbar
                 println("Error al canjear: ${e.message}")
             }
-            // Si es success, no hacemos nada.
-            // Room detecta la inserción -> Recalcula la resta -> Actualiza el UI State solo.
         }
     }
 }

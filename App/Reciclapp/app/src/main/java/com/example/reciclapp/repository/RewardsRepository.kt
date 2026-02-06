@@ -1,4 +1,5 @@
-import androidx.room.withTransaction
+package com.example.reciclapp.repository
+
 import com.example.reciclapp.database.ReciclappDatabase
 import com.example.reciclapp.database.entities.PurchaseEntity
 import com.example.reciclapp.database.entities.UserEntity
@@ -34,7 +35,7 @@ class RewardsRepository(
             val response = api.getUserPoints()
             if (response.isSuccessful && response.body() != null) {
                 // Sobrescribimos el usuario. Esto disparará el combine de arriba automáticamente.
-                val remotePoints = response.body()!!.puntos
+                val remotePoints = response.body()!!.points
                 userDao.insertUser(UserEntity(id = 1, username = "Usuario", pointsBalance = remotePoints))
                 Result.success(Unit)
             } else {

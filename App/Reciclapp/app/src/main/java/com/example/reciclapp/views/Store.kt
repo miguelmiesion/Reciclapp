@@ -1,6 +1,5 @@
 package com.example.reciclapp.views
 
-import RewardsRepository
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,6 +48,7 @@ import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.network.TokenManager
 // Imports necesarios para la DB
 import com.example.reciclapp.database.ReciclappDatabase
+import com.example.reciclapp.repository.RewardsRepository
 
 
 data class StoreItem(

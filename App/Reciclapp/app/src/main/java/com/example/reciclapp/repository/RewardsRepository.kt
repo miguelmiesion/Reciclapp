@@ -9,7 +9,7 @@ class RewardsRepository(
         return try {
             val response = api.getUserPoints()
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.puntos)
+                Result.success(response.body()!!.points)
             } else {
                 Result.failure(Exception("Error de API"))
             }

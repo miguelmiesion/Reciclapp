@@ -52,9 +52,11 @@ data class RankingEntry(
 )
 
 data class UserPositionResponse(
-    val posicion: Int,
+    @SerializedName("puntos")
+    val position: Int,
 )
 
 data class UserPointsResponse(
-    val puntos : Int,
+    @SerializedName("puntos")
+    val points : Int,
 )

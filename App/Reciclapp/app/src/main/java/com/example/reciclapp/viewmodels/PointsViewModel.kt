@@ -36,8 +36,8 @@ class PointsViewModel(
         _uiState.update { it.copy(isLoading = true) }
         val result = repository.getUserBalance()
 
-        result.onSuccess { puntos ->
-            _uiState.update { it.copy(userBalance = puntos) }
+        result.onSuccess { points ->
+            _uiState.update { it.copy(userBalance = points) }
         }.onFailure { error ->
             _uiState.update { it.copy(error = error.message ?: "Error del servidor") }
         }

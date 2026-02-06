@@ -2,19 +2,17 @@ package com.example.reciclapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.reciclapp.database.entities.ItemEntity
 import com.example.reciclapp.repository.RewardsRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import com.example.reciclapp.views.StoreItem
+import com.example.reciclapp.views.toStoreItem
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+
 
 data class PointsUiState(
     val userBalance: Int = 0,
+    val storeItems: List<StoreItem> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -22,48 +20,65 @@ data class PointsUiState(
 class PointsViewModel(
     private val repository: RewardsRepository
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(PointsUiState())
-    val uiState: StateFlow<PointsUiState> = _uiState.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(true)
+    private val _error = MutableStateFlow<String?>(null)
+
+    // Combinamos: Balance + Items del Catálogo + Items Comprados (IDs)
+    val uiState: StateFlow<PointsUiState> = combine(
+        repository.userBalance,
+        repository.allItems,
+        repository.ownedItemIds, // El nuevo flujo
+        _isLoading,
+        _error
+    ) { balance, entities, ownedIds, loading, err ->
+
+        // Mapeamos las entidades a modelos de UI calculando isOwned
+        val uiItems = entities.map { entity ->
+            entity.toStoreItem(isOwned = ownedIds.contains(entity.itemId))
+        }
+
+        PointsUiState(
+            userBalance = balance,
+            storeItems = uiItems,
+            isLoading = loading,
+            error = err
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = PointsUiState(isLoading = true)
+    )
 
     init {
-        viewModelScope.launch {
-            repository.userBalance.collect { points ->
-                _uiState.update { it.copy(userBalance = points) }
-            }
-        }
         refreshData()
     }
 
-    // 2. SINCRONIZACIÓN
-    fun update() {
-        refreshData()
-    }
+    fun update() = refreshData()
 
     private fun refreshData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _isLoading.value = true
             val result = repository.refreshUserBalance()
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    error = result.exceptionOrNull()?.message
-                )
-            }
+            _error.value = result.exceptionOrNull()?.message
+            _isLoading.value = false
         }
     }
 
-    fun redeemItem(itemPrice: Int, itemName: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun redeemItem(itemId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            val result = repository.redeemItem(itemPrice, itemName)
+            _isLoading.value = true
+            val result = repository.redeemItem(itemId)
 
             result.onSuccess {
-                refreshData() // Sincronizamos balance local
+                // No necesitas llamar a refreshData() manualmente para los items,
+                // Room detectará la nueva transacción y actualizará el Flow automáticamente.
+                refreshData()
                 onSuccess()
             }.onFailure { e ->
-                // Aquí puedes mapear errores específicos, ej: "Créditos insuficientes"
-                val errorMsg = e.message ?: "No se pudo realizar el canje"
-                onError(errorMsg)
+                onError(e.message ?: "Error en el canje")
             }
+            _isLoading.value = false
         }
     }
 }

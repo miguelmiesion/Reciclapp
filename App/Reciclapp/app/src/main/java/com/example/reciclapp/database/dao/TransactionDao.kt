@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
+
     @Insert
     suspend fun insertPurchase(purchase: PurchaseEntity)
 
@@ -21,7 +22,7 @@ interface TransactionDao {
 """)
     fun getTotalSpentAmount(): Flow<Int?>
 
-    @Query("SELECT EXISTS(SELECT 1 FROM purchase_history WHERE itemId = :itemId LIMIT 1)")
-    suspend fun itemIsOwned(itemId: Long): Boolean
+    @Query("SELECT itemId FROM purchase_history")
+    fun getPurchasedItemIds(): Flow<List<Long>>
 
 }

@@ -17,4 +17,5 @@ interface UserDao {
     // Para descontar puntos (ejecutar dentro de una transacción)
     @Query("UPDATE user_table SET pointsBalance = :newBalance WHERE id = :userId")
     suspend fun updatePoints(userId: Int, newBalance: Int)
+
 }

@@ -71,11 +71,11 @@ abstract class ReciclappDatabase : RoomDatabase() {
 
         suspend fun populateDatabase(itemDao: ItemDao) {
             val initialItems = listOf(
-                ItemEntity(0, "Totebag Reciclapp", 500, true, Icons.Default.ShoppingBag, Color.DarkGray),
-                ItemEntity(1, "Decoración Oro", 200, false, Icons.Default.WorkspacePremium, Gold),
-                ItemEntity(2, "Badge Reciclador", 150, false, Icons.Default.Eco, Color(0xFF4CAF50)),
-                ItemEntity(3, "Icono Premium", 300, false, Icons.Default.WorkspacePremium, Color(0xFF673AB7)),
-                ItemEntity(4, "Color Nickname", 100, false, Icons.Default.ShoppingBag, Color(0xFFE91E63))
+                ItemEntity(0, "Totebag Reciclapp", 500, true, "shopping_bag", "#444444"),
+                ItemEntity(1, "Decoración Oro", 200, false, "premium", "#FFD700"),
+                ItemEntity(2, "Badge Reciclador", 150, false, "eco", "#4CAF50"),
+                ItemEntity(3, "Icono Premium", 300, false, "premium", "#673AB7"),
+                ItemEntity(4, "Nickname de color", 100, false, "shopping_bag", "#E91E63")
             )
 
             itemDao.insertAll(initialItems)

@@ -12,6 +12,6 @@ data class ItemEntity (
     val itemName: String,
     val cost: Int,
     val isFeatured: Boolean = false,
-    val icon: ImageVector,
-    val color: Color,
+    val icon: String,
+    val color: String,
 )

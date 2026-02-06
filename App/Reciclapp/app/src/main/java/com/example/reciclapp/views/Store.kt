@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AllInclusive
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -41,6 +42,7 @@ import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.database.ReciclappDatabase
+import com.example.reciclapp.database.entities.ItemEntity
 import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.ui.theme.*
 
@@ -64,24 +66,20 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
     )
 
     val state by viewModel.uiState.collectAsState()
-    val ownedItemsIds = remember { mutableStateListOf<Int>() }
+
+    // Como el ViewModel ya nos da StoreItems mapeados, solo filtramos
+    val featuredItems = remember(state.storeItems) {
+        state.storeItems.filter { it.isFeatured }
+    }
+    val catalogItems = remember(state.storeItems) {
+        state.storeItems.filter { !it.isFeatured }
+    }
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<StoreItem?>(null) }
 
-    // Datos
-    val featuredItem = StoreItem(0, "Totebag Reciclapp", 500, true, Icons.Default.ShoppingBag, Color.DarkGray)
-    val gridItems = remember {
-        listOf(
-            StoreItem(1, "Decoración Oro", 200, false, Icons.Default.WorkspacePremium, Gold),
-            StoreItem(2, "Badge Reciclador", 150, false, Icons.Default.Eco, Color(0xFF4CAF50)),
-            StoreItem(3, "Icono Premium", 300, false, Icons.Default.WorkspacePremium, Color(0xFF673AB7)),
-            StoreItem(4, "Color Nickname", 100, false, Icons.Default.ShoppingBag, Color(0xFFE91E63))
-        )
-    }
-
-    popupController.currentResult?.let { result ->
-        ResultPopup(result = result, onDismiss = { popupController.dismiss() })
+    LaunchedEffect(state.error) {
+        state.error?.let { popupController.showError(it) }
     }
 
     if (showConfirmDialog && selectedItem != null) {
@@ -95,20 +93,14 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
                     popupController.showError("Créditos insuficientes.")
                 } else {
                     viewModel.redeemItem(
-                        itemPrice = item.price,
-                        itemName = item.name,
-                        onSuccess = {
-                            ownedItemsIds.add(item.id)
-                            popupController.showSuccess("¡Canjeado: ${item.name}!")
-                        },
+                        itemId = item.id.toLong(),
+                        onSuccess = { popupController.showSuccess("¡Canjeado: ${item.name}!") },
                         onError = { popupController.showError(it) }
                     )
                 }
             }
         )
     }
-
-    LaunchedEffect(Unit) { viewModel.update() }
 
     Scaffold(
         bottomBar = { ReciclappBottomBar(navController) },
@@ -119,8 +111,7 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
             contentPadding = PaddingValues(
                 top = paddingValues.calculateTopPadding() + 24.dp,
                 bottom = paddingValues.calculateBottomPadding() + 24.dp,
-                start = 24.dp,
-                end = 24.dp
+                start = 24.dp, end = 24.dp
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -130,42 +121,36 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
                 StoreHeader(state.userBalance, state.isLoading, navController, tokenManager)
             }
 
-            // --- SECCIÓN DESTACADOS (Totebag) ---
-            item(span = { GridItemSpan(2) }) {
-                Text(
-                    text = "Items destacados",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText)
-                )
-            }
-
-            item(span = { GridItemSpan(2) }) {
-                val featuredStatus = featuredItem.copy(isOwned = ownedItemsIds.contains(featuredItem.id))
-                FeaturedItemCard(item = featuredStatus) {
-                    if (featuredStatus.isOwned) {
-                        popupController.showError("Ya tienes este item.")
-                    } else {
-                        selectedItem = featuredStatus
-                        showConfirmDialog = true
+            // --- DESTACADOS ---
+            if (featuredItems.isNotEmpty()) {
+                item(span = { GridItemSpan(2) }) {
+                    Text(text = "Items destacados", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText))
+                }
+                items(featuredItems, span = { GridItemSpan(2) }) { item ->
+                    FeaturedItemCard(item = item) {
+                        // LÓGICA DE PROTECCIÓN AQUÍ
+                        if (item.isOwned) {
+                            popupController.showError("Ya tenés este item")
+                        } else {
+                            selectedItem = item
+                            showConfirmDialog = true
+                        }
                     }
                 }
             }
 
-            // --- SECCIÓN CATÁLOGO ---
+            // --- CATÁLOGO ---
             item(span = { GridItemSpan(2) }) {
-                Text(
-                    text = "Más para canjear",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText),
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                Text(text = "Más para canjear", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText), modifier = Modifier.padding(top = 8.dp))
             }
 
-            items(gridItems) { item ->
-                val itemStatus = item.copy(isOwned = ownedItemsIds.contains(item.id))
-                StandardItemCard(item = itemStatus) {
-                    if (itemStatus.isOwned) {
-                        popupController.showError("Ya tienes este item.")
+            items(catalogItems) { item ->
+                StandardItemCard(item = item) {
+                    // LÓGICA DE PROTECCIÓN AQUÍ
+                    if (item.isOwned) {
+                        popupController.showError("Ya tenés este item")
                     } else {
-                        selectedItem = itemStatus
+                        selectedItem = item
                         showConfirmDialog = true
                     }
                 }
@@ -300,9 +285,33 @@ fun RedeemConfirmationDialog(item: StoreItem, onDismiss: () -> Unit, onConfirm: 
 class PointsViewModelFactory(private val context: Context, private val api: ReciclappApi) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PointsViewModel::class.java)) {
-            val db = ReciclappDatabase.getDatabase(context)
+            // Usamos el scope del proceso de la app para la inicialización de la DB
+            val db = ReciclappDatabase.getDatabase(context, kotlinx.coroutines.MainScope())
             return PointsViewModel(RewardsRepository(api, db)) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
+}
+
+fun ItemEntity.toStoreItem(isOwned: Boolean): StoreItem {
+    return StoreItem(
+        id = this.itemId.toInt(),
+        name = this.itemName,
+        price = this.cost,
+        isFeatured = this.isFeatured,
+        // Mapeo de iconos
+        icon = when (this.icon) {
+            "shopping_bag" -> Icons.Default.ShoppingBag
+            "premium" -> Icons.Default.WorkspacePremium
+            "eco" -> Icons.Default.Eco
+            else -> Icons.Default.ShoppingBag
+        },
+
+        color = try {
+            Color(android.graphics.Color.parseColor(this.color))
+        } catch (e: Exception) {
+            Color.Gray
+        },
+        isOwned = isOwned
+    )
 }

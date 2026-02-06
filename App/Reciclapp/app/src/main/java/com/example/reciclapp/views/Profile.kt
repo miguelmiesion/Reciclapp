@@ -34,22 +34,21 @@ import com.example.reciclapp.ui.theme.TextColor
 import com.example.reciclapp.viewmodels.ProfileViewModel
 import com.example.reciclapp.viewmodels.ProfileViewModelFactory
 
+import com.example.reciclapp.database.ReciclappDatabase
+
 @Composable
 fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
 
     // Configuración MVVM
     val api = RetrofitClient.getApi(context)
-    val repository = remember { ProfileRepository(api) }
+    val db = ReciclappDatabase.getDatabase(context)
+    val repository = remember { ProfileRepository(api, db.transactionDao()) }
     val viewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModelFactory(repository)
     )
 
     val state by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.update()
-    }
 
     Scaffold { paddingValues ->
         Column(

@@ -45,12 +45,13 @@ class ProfileViewModel(
             is NetworkResult.Success -> {
                 val user = result.data
                 if (user != null) {
-                    val nombreLimpio = user.username.trim()
+                    val trimmedName = user.username.trim()
 
                     _uiState.update {
                         it.copy(
                             userId = user.id,
-                            userName = nombreLimpio
+                            userName = trimmedName,
+                            isLoading = false
                         )
                     }
                 } else {

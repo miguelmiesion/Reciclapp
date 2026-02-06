@@ -14,7 +14,14 @@ interface TransactionDao {
     @Query("SELECT * FROM purchase_history ORDER BY timestamp DESC")
     fun getAllPurchases(): Flow<List<PurchaseEntity>>
 
-    @Query("SELECT SUM(cost) FROM purchase_history")
+    @Query("""
+    SELECT SUM(item_table.cost) 
+    FROM purchase_history 
+    INNER JOIN item_table ON purchase_history.itemId = item_table.itemId
+""")
     fun getTotalSpentAmount(): Flow<Int?>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM purchase_history WHERE itemId = :itemId LIMIT 1)")
+    suspend fun itemIsOwned(itemId: Long): Boolean
 
 }

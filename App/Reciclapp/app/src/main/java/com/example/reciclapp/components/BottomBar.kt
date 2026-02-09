@@ -33,7 +33,7 @@ fun ReciclappBottomBar(navController: NavController) {
             .padding(24.dp)
             .height(70.dp)
             .clip(RoundedCornerShape(35.dp))
-            .background(Color(0xFFA5D6A7)) // Background color from your design
+            .background(Color(0xFFA5D6A7))
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -62,7 +62,6 @@ fun ReciclappBottomBar(navController: NavController) {
                 onClick = {
                     if (currentRoute != "maps_screen") {
                         navController.navigate("maps_screen") {
-                            // Mantiene el estado y evita duplicados
                             popUpTo("home_screen") { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -117,14 +116,14 @@ fun BottomBarItem(
         modifier = Modifier
             .size(56.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (isSelected) Primary else Color.Transparent) // Highlight background if selected
+            .background(if (isSelected) Primary else Color.Transparent)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = description,
-            tint = if (isSelected) Color.White else Color(0xFF424242), // White icon if selected, Dark Gray if not
+            tint = if (isSelected) Color.White else Color(0xFF424242),
             modifier = Modifier.size(28.dp)
         )
     }

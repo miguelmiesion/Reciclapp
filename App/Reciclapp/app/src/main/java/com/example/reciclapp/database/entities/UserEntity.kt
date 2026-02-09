@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "user_table")
 data class UserEntity(
-    @PrimaryKey val id: Int, // Usamos el ID del backend
+    @PrimaryKey val id: Int,
     val username: String,
     val pointsBalance: Int,
-    val lastUpdated: Long = System.currentTimeMillis() // Útil para invalidar caché
+    val lastUpdated: Long = System.currentTimeMillis()
 )

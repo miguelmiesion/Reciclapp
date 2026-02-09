@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource // IMPORTANTE: Para cargar PNGs
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,7 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.core.graphics.toColorInt
 
-import com.example.reciclapp.R // IMPORTANTE: Tu archivo de recursos
+import com.example.reciclapp.R
 import com.example.reciclapp.components.ReciclappBottomBar
 import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.components.LocalPopupState
@@ -42,7 +42,6 @@ import com.example.reciclapp.database.entities.ItemEntity
 import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.ui.theme.*
 
-// CAMBIO 1: El icono ahora es un Int (ID de recurso R.drawable.xxx), no un ImageVector
 data class StoreItem(
     val id: Int,
     val name: String,
@@ -117,7 +116,6 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
                 StoreHeader(state.userBalance, state.isLoading, navController, tokenManager)
             }
 
-            // --- DESTACADOS ---
             if (featuredItems.isNotEmpty()) {
                 item(span = { GridItemSpan(2) }) {
                     Text(text = "Items destacados", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText))
@@ -134,7 +132,6 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
                 }
             }
 
-            // --- CATÁLOGO ---
             item(span = { GridItemSpan(2) }) {
                 Text(text = "Más para canjear", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText), modifier = Modifier.padding(top = 8.dp))
             }
@@ -194,7 +191,6 @@ fun FeaturedItemCard(item: StoreItem, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // CAMBIO 2: Usamos painterResource con el ID del PNG
             Icon(
                 painter = painterResource(id = item.iconResId),
                 contentDescription = null,
@@ -242,8 +238,6 @@ fun StandardItemCard(item: StoreItem, onClick: () -> Unit) {
                 color = if (item.isOwned) Color.LightGray.copy(alpha = 0.2f) else item.color.copy(alpha = 0.1f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    // CAMBIO 3: Usamos painterResource.
-                    // Color.Unspecified deja ver los colores originales del PNG (importante para iconos lindos)
                     Icon(
                         painter = painterResource(id = item.iconResId),
                         contentDescription = null,
@@ -298,7 +292,6 @@ class PointsViewModelFactory(private val context: Context, private val api: Reci
     }
 }
 
-// CAMBIO 4: Lógica de Mapeo de String (DB) a Drawable (App)
 fun ItemEntity.toStoreItem(isOwned: Boolean): StoreItem {
     return StoreItem(
         id = this.itemId.toInt(),

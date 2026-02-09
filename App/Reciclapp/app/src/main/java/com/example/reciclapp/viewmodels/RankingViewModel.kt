@@ -101,7 +101,6 @@ class RankingViewModel(
             val rawList = topResult.data ?: emptyList()
             val userPosData = posResult.data
 
-            // Lógica de ordenamiento Z-A y búsqueda
             val sortedList = rawList.sortedWith(
                 compareByDescending<RankingEntry> { it.totalPoints }
                     .thenByDescending { it.username }

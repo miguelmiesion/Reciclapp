@@ -187,7 +187,6 @@ fun ScanQrScreen(navController: NavController, tokenManager: TokenManager) {
     }
 }
 
-// ... El resto del archivo (CameraPreview, QrOverlay, ReciclappBottomBar) queda IGUAL ...
 @Composable
 fun CameraPreview(onQrScanned: (String) -> Unit) {
     LocalContext.current

@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [UserEntity::class, PurchaseEntity::class, ItemEntity::class],
-    // CAMBIO 1: Subimos a versión 3 para borrar la lista vieja y poner la nueva
     version = 4,
     exportSchema = false
 )

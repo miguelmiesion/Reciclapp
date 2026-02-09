@@ -11,7 +11,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.* // Esto incluye collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,11 +48,7 @@ fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
         factory = RankingViewModelFactory(repository)
     )
 
-    // --- CORRECCIÓN AQUÍ ---
-    // Antes: val state = viewModel.uiState
-    // Ahora: Usamos 'by' y 'collectAsState()' para escuchar los cambios del Flow
     val state by viewModel.uiState.collectAsState()
-    // -----------------------
 
     var isFilterMenuExpanded by remember { mutableStateOf(false) }
     val filterOptions = listOf("Todos", "Vidrio", "Carton", "Metal", "Papel")
@@ -91,7 +87,6 @@ fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
             HorizontalDivider(thickness = 2.dp, color = DarkerPrimary)
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Título dinámico
             Text(
                 text = if (state.currentFilter == null) "Usuarios top" else "Top - ${state.currentFilter}",
                 fontWeight = FontWeight.SemiBold,
@@ -99,7 +94,6 @@ fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // LISTA TOP
             Card(
                 modifier = Modifier
                     .weight(1f)
@@ -133,7 +127,6 @@ fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // TU POSICIÓN
             state.userPosition?.let { pos ->
                 Text("Tu posición", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -156,7 +149,6 @@ fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // BOTÓN FILTRO
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center

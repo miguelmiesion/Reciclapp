@@ -6,7 +6,6 @@ import com.example.reciclapp.repository.RewardsRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-// Modelo de UI para mostrar en el historial (el "Join" resuelto)
 data class HistoryUiModel(
     val purchaseId: Long,
     val itemName: String,

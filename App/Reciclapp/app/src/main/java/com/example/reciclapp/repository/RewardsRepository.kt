@@ -26,8 +26,8 @@ class RewardsRepository(
     val ownedItemIds: Flow<List<Long>> = transactionDao.getPurchasedItemIds()
 
     val currentUser = userDao.getUser()
-    val userBalance: Flow<Int> = userDao.getUser() // Flow A
-        .combine(transactionDao.getTotalSpentAmount()) { user, spentAmount -> // Flow B
+    val userBalance: Flow<Int> = userDao.getUser()
+        .combine(transactionDao.getTotalSpentAmount()) { user, spentAmount ->
 
             val basePoints = user?.pointsBalance ?: 0
             val totalSpent = spentAmount ?: 0

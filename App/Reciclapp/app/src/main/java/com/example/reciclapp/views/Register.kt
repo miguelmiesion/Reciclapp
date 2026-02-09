@@ -208,7 +208,7 @@ fun RegisterScreen(navController: NavController, tokenManager: TokenManager) {
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = if (doPasswordsMatch) Color.Black else Color.Red, // Visual feedback
+                    focusedIndicatorColor = if (doPasswordsMatch) Color.Black else Color.Red,
                     unfocusedIndicatorColor = Color.Gray
                 )
             )

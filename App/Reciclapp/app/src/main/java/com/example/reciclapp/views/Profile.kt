@@ -160,7 +160,6 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Iteramos sobre HistoryUiModel, que ya tiene nombre e icono
                         items(state.purchaseHistory) { item ->
                             PurchasedItemCard(item)
                         }
@@ -221,8 +220,6 @@ fun PurchasedItemCard(item: HistoryUiModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Lógica de mapeo: Usamos el nombre para saber qué imagen mostrar
-            // (Igual que como lo hicimos en la Tienda)
             val iconResId = when {
                 item.itemName.contains("Totebag") -> R.drawable.ic_totebag
                 item.itemName.contains("Oro") -> R.drawable.ic_gold_deco
@@ -232,9 +229,6 @@ fun PurchasedItemCard(item: HistoryUiModel) {
                 else -> R.drawable.ic_totebag
             }
 
-            // CAMBIO CLAVE:
-            // 1. Usamos painterResource para cargar el PNG
-            // 2. Usamos tint = Color.Unspecified para que se vean los colores originales
             Icon(
                 painter = painterResource(id = iconResId),
                 contentDescription = null,

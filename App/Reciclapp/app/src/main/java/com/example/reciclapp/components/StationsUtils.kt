@@ -116,7 +116,6 @@ fun StationSelector(
     var expanded by remember { mutableStateOf(false) }
     var selectedOptionText by remember { mutableStateOf("") }
 
-    // Usamos Box para darle un fondo blanco y sombra, estilo "Widget de Google Maps"
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -133,14 +132,14 @@ fun StationSelector(
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth(),
-                readOnly = true, // Importante: Que no abra el teclado
+                readOnly = true,
                 value = selectedOptionText.ifEmpty { "Ir a una estación..." },
                 onValueChange = { },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 colors = ExposedDropdownMenuDefaults.textFieldColors(
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent, // Sin linea abajo
+                    focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
                 )
             )
@@ -159,7 +158,7 @@ fun StationSelector(
                         onClick = {
                             selectedOptionText = station.name
                             expanded = false
-                            onStationSelected(station) // <--- Callback al padre
+                            onStationSelected(station)
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                     )

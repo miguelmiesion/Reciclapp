@@ -37,7 +37,7 @@ class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
 
     fun fetchStations() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) } // Limpiamos errores previos
+            _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 when(val result = repository.getStations()) {
                     is NetworkResult.Success -> {
@@ -48,7 +48,6 @@ class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
                     }
                 }
             } catch (e: Exception) {
-                // Captura de emergencia por si el repositorio crashea antes de devolver NetworkResult
                 _uiState.update { it.copy(error = e.message, isLoading = false) }
             }
         }
@@ -61,7 +60,6 @@ class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
             try {
                 val endPoint = GeoPoint(station.latitude, station.longitude)
 
-                // Calculamos la ruta
                 val points = repository.calculateRoute(userLocation, endPoint)
 
                 if (points.isNullOrEmpty()) {
@@ -80,7 +78,6 @@ class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
                     }
                 }
             } catch (e: Exception) {
-                // EVITA EL CRASH
                 Log.e("MapsViewModel", "Error calculando ruta", e)
                 _uiState.update {
                     it.copy(
@@ -96,10 +93,8 @@ class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(currentAddress = null) }
 
-            // 2. Pedimos la dirección al repositorio
             val address = repository.getAddress(geoPoint)
 
-            // 3. Actualizamos el estado con el resultado (o un texto por defecto si falló)
             _uiState.update {
                 it.copy(currentAddress = address ?: "Dirección no encontrada")
             }

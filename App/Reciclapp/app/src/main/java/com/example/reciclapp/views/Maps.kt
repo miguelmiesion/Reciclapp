@@ -162,7 +162,7 @@ fun MapsScreen(navController: NavController) {
                             marker.setOnMarkerClickListener { _, _ ->
                                 selectedStation = station
                                 val location = GeoPoint(station.latitude, station.longitude)
-                                viewModel.resolveAddressForLocation(location) // <--- LLAMADA CLAVE
+                                viewModel.resolveAddressForLocation(location)
 
                                 map.controller.animateTo(location)
                                 true
@@ -172,10 +172,9 @@ fun MapsScreen(navController: NavController) {
                         }
 
                         state.routePoints?.let { points ->
-                            // Creamos la Polyline AQUÍ, fresca y vinculada a ESTE mapa
                             val routeLine = Polyline(map)
 
-                            routeLine.setPoints(points) // Le inyectamos los datos
+                            routeLine.setPoints(points)
 
                             routeLine.outlinePaint.color = DarkerPrimary.toArgb()
                             routeLine.outlinePaint.strokeWidth = 16f
@@ -189,7 +188,6 @@ fun MapsScreen(navController: NavController) {
                     }
                 )
 
-                // Selector Superior (Search Bar)
                 Box(modifier = Modifier.align(Alignment.TopCenter)) {
                     StationSelector(
                         stations = state.stations,
@@ -197,7 +195,7 @@ fun MapsScreen(navController: NavController) {
                             val targetPoint = GeoPoint(station.latitude, station.longitude)
                             mapView?.controller?.animateTo(targetPoint)
                             mapView?.controller?.setZoom(18.0)
-                            selectedStation = station // También abrimos la tarjeta al buscar
+                            selectedStation = station
                         }
                     )
                 }
@@ -225,7 +223,6 @@ fun MapsScreen(navController: NavController) {
                     }
                 }
 
-                // Botón de Ubicación (Solo visible si NO hay una estación seleccionada para no tapar)
                 if (selectedStation == null) {
                     FloatingActionButton(
                         containerColor = LighterPrimary,

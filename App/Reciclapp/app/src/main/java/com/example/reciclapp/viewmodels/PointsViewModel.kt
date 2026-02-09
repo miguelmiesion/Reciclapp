@@ -24,7 +24,6 @@ class PointsViewModel(
     private val _isLoading = MutableStateFlow(true)
     private val _error = MutableStateFlow<String?>(null)
 
-    // Combinamos: Balance + Items del Catálogo + Items Comprados (IDs)
     val uiState: StateFlow<PointsUiState> = combine(
         repository.userBalance,
         repository.allItems,

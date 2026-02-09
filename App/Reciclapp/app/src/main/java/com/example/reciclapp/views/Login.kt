@@ -104,7 +104,6 @@ fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
 
             Spacer(modifier = Modifier.height(72.dp))
 
-            // 2. Title
             Text(
                 text = "Login",
                 fontSize = 32.sp,

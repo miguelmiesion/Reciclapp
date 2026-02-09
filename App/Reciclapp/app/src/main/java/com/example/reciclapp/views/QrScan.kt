@@ -2,7 +2,6 @@ package com.example.reciclapp.views
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.media.MediaPlayer
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,9 +14,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.example.reciclapp.R
+import androidx.lifecycle.viewmodel.compose.viewModel
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import com.example.reciclapp.engine.QrCodeAnalyzer
@@ -45,25 +41,31 @@ import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.repository.WasteRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
-import com.example.reciclapp.ui.theme.Primary
 import androidx.navigation.NavController
 import com.example.reciclapp.components.ReciclappBottomBar
 
 
 import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.network.TokenManager
+import com.example.reciclapp.utils.playSound
+import com.example.reciclapp.viewmodels.QrScanViewModel
+import com.example.reciclapp.viewmodels.QrScanViewModelFactory
 
 @Composable
 fun ScanQrScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
-
-    val scope = rememberCoroutineScope()
-
     val popupController = LocalPopupState.current
 
     val wasteRepository = remember { WasteRepository(RetrofitClient.getApi(context)) }
 
+    val viewModel : QrScanViewModel = viewModel(
+        factory = QrScanViewModelFactory(wasteRepository)
+    )
+
     var isProcessing by remember { mutableStateOf(false) }
+
+    val state by viewModel.uiState.collectAsState()
+
     var hasCamPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -81,6 +83,20 @@ fun ScanQrScreen(navController: NavController, tokenManager: TokenManager) {
     LaunchedEffect(key1 = true) {
         if (!hasCamPermission) {
             launcher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    LaunchedEffect(state) {
+        if (state.success) {
+            playSound(context)
+            popupController.showSuccess(state.message ?: "Felicidades, reciclaste con éxito!")
+            viewModel.resetState()
+            isProcessing = false
+        }
+        else if (state.error) {
+            popupController.showError(state.message ?: "Ocurrió un error desconocido")
+            viewModel.resetState()
+            isProcessing = false
         }
     }
 
@@ -133,42 +149,23 @@ fun ScanQrScreen(navController: NavController, tokenManager: TokenManager) {
                         onQrScanned = { resultString ->
                             if (!isProcessing && popupController.currentResult == null) {
                                 isProcessing = true
-
-                                scope.launch(Dispatchers.IO) {
-                                    try {
-
-                                        val jsonQr = JSONObject(resultString)
-                                        val wasteId = jsonQr.getString("ID Residuo")
-                                        val points = jsonQr.optInt("Puntos", 0)
-
-                                        val result = wasteRepository.claimWaste(wasteId)
-
-                                        withContext(Dispatchers.Main) {
-                                            when (result) {
-                                                is NetworkResult.Success -> {
-
-                                                    playSound(context)
-                                                    popupController.showSuccess("Sumaste $points puntos!")
-                                                }
-                                                is NetworkResult.Error -> {
-
-                                                    popupController.showError(result.message ?: "Error desconocido")
-                                                }
-                                            }
-                                        }
-
-                                    } catch (_: Exception) {
-                                        withContext(Dispatchers.Main) {
-                                            popupController.showError("Código QR inválido")
-                                        }
-                                    } finally {
-                                        isProcessing = false
-                                    }
-                                }
+                                viewModel.claimWaste(resultString)
                             }
                         }
                     )
                     QrOverlay()
+                    if (isProcessing) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = DarkerPrimary
+                            )
+                        }
+                    }
                 }
             } else {
                 Box(
@@ -257,16 +254,5 @@ fun QrOverlay() {
             cornerRadius = CornerRadius(16.dp.toPx()),
             style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
         )
-    }
-}
-
-
-fun playSound(context: android.content.Context) {
-    try {
-        val mp = MediaPlayer.create(context, R.raw.neo_geo_coin)
-        mp.start()
-        mp.setOnCompletionListener { it.release() }
-    } catch (e: Exception) {
-        e.printStackTrace()
     }
 }

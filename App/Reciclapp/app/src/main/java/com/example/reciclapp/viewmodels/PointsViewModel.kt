@@ -1,8 +1,12 @@
 package com.example.reciclapp.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.reciclapp.database.ReciclappDatabase
 import com.example.reciclapp.database.entities.ItemEntity
+import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.views.StoreItem
 import com.example.reciclapp.views.toStoreItem
@@ -76,5 +80,17 @@ class PointsViewModel(
             }
             _isLoading.value = false
         }
+    }
+}
+
+
+class ProfileViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
+            val db = ReciclappDatabase.getDatabase(context, kotlinx.coroutines.MainScope())
+            val api = RetrofitClient.getApi(context)
+            return ProfileViewModel(RewardsRepository(api, db)) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

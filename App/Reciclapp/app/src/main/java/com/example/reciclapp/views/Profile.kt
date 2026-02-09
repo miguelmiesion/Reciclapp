@@ -1,6 +1,5 @@
 package com.example.reciclapp.views
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -11,9 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,15 +20,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.reciclapp.components.ProfileDropdown
-import com.example.reciclapp.database.ReciclappDatabase
-import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
-import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.Primary
 import com.example.reciclapp.ui.theme.TextColor
@@ -40,7 +31,7 @@ import com.example.reciclapp.viewmodels.HistoryUiModel
 import com.example.reciclapp.viewmodels.ProfileViewModel
 import androidx.compose.ui.res.painterResource
 import com.example.reciclapp.R
-import androidx.core.graphics.toColorInt
+import com.example.reciclapp.viewmodels.ProfileViewModelFactory
 
 @Composable
 fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
@@ -253,16 +244,5 @@ fun PurchasedItemCard(item: HistoryUiModel) {
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
-    }
-}
-
-class ProfileViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
-            val db = ReciclappDatabase.getDatabase(context, kotlinx.coroutines.MainScope())
-            val api = RetrofitClient.getApi(context)
-            return ProfileViewModel(RewardsRepository(api, db)) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

@@ -62,6 +62,7 @@ class RankingViewModel(
                     }
                 }
             }
+
             is NetworkResult.Error -> {
                 _uiState.update {
                     it.copy(isLoading = false, error = result.message)
@@ -130,7 +131,8 @@ class RankingViewModel(
     }
 }
 
-class RankingViewModelFactory(private val repository: RankingRepository) : ViewModelProvider.Factory {
+class RankingViewModelFactory(private val repository: RankingRepository) :
+    ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(RankingViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")

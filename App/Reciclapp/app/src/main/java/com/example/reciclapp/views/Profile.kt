@@ -1,7 +1,18 @@
 package com.example.reciclapp.views
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -10,18 +21,31 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.reciclapp.R
 import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.ui.theme.DarkerPrimary
@@ -29,8 +53,6 @@ import com.example.reciclapp.ui.theme.Primary
 import com.example.reciclapp.ui.theme.TextColor
 import com.example.reciclapp.viewmodels.HistoryUiModel
 import com.example.reciclapp.viewmodels.ProfileViewModel
-import androidx.compose.ui.res.painterResource
-import com.example.reciclapp.R
 import com.example.reciclapp.viewmodels.ProfileViewModelFactory
 
 @Composable
@@ -134,7 +156,10 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), color = Color.LightGray.copy(alpha = 0.5f))
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    color = Color.LightGray.copy(alpha = 0.5f)
+                )
 
 
                 Text(
@@ -156,7 +181,12 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
                         }
                     }
                 } else {
-                    Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
                             text = "Aún no has canjeado recompensas.",
                             fontSize = 14.sp,
@@ -170,13 +200,25 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
 
                 Button(
                     onClick = { navController.popBackStack() },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Volver", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        "Volver",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }

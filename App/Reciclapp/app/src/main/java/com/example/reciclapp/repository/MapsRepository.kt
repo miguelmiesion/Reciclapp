@@ -2,22 +2,21 @@ package com.example.reciclapp.repository
 
 import android.content.Context
 import android.location.Address
+import com.example.reciclapp.network.BaseApiResponse
 import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.ReciclappApi
-import com.example.reciclapp.network.BaseApiResponse
 import com.example.reciclapp.network.Station
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.osmdroid.bonuspack.location.GeocoderNominatim
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.Road
-import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.overlay.Polyline
 import java.util.Locale
 
-class MapsRepository(private val api: ReciclappApi, private val context: Context): BaseApiResponse() {
-    suspend fun getStations() : NetworkResult<List<Station>> {
+class MapsRepository(private val api: ReciclappApi, private val context: Context) :
+    BaseApiResponse() {
+    suspend fun getStations(): NetworkResult<List<Station>> {
         return safeApiCall { api.getStations() }
     }
 

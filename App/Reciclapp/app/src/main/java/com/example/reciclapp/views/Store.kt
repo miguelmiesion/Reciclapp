@@ -3,7 +3,18 @@ package com.example.reciclapp.views
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -11,8 +22,25 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Eco
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,24 +51,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.core.graphics.toColorInt
-
 import com.example.reciclapp.R
-import com.example.reciclapp.components.ReciclappBottomBar
-import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.components.LocalPopupState
-import com.example.reciclapp.viewmodels.PointsViewModel
+import com.example.reciclapp.components.ProfileDropdown
+import com.example.reciclapp.components.ReciclappBottomBar
+import com.example.reciclapp.database.ReciclappDatabase
+import com.example.reciclapp.database.entities.ItemEntity
 import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
-import com.example.reciclapp.database.ReciclappDatabase
-import com.example.reciclapp.database.entities.ItemEntity
 import com.example.reciclapp.repository.RewardsRepository
-import com.example.reciclapp.ui.theme.*
+import com.example.reciclapp.ui.theme.ConfirmGreen
+import com.example.reciclapp.ui.theme.DarkerText
+import com.example.reciclapp.ui.theme.PointsPillBg
+import com.example.reciclapp.ui.theme.PointsTextGreen
+import com.example.reciclapp.ui.theme.PriceTextGreen
+import com.example.reciclapp.ui.theme.StoreBackground
+import com.example.reciclapp.viewmodels.PointsViewModel
 
 data class StoreItem(
     val id: Int,
@@ -118,7 +150,13 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
 
             if (featuredItems.isNotEmpty()) {
                 item(span = { GridItemSpan(2) }) {
-                    Text(text = "Items destacados", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText))
+                    Text(
+                        text = "Items destacados",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = DarkerText
+                        )
+                    )
                 }
                 items(featuredItems, span = { GridItemSpan(2) }) { item ->
                     FeaturedItemCard(item = item) {
@@ -133,7 +171,14 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
             }
 
             item(span = { GridItemSpan(2) }) {
-                Text(text = "Más para canjear", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = DarkerText), modifier = Modifier.padding(top = 8.dp))
+                Text(
+                    text = "Más para canjear",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = DarkerText
+                    ),
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
 
             items(catalogItems) { item ->
@@ -151,22 +196,41 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
 }
 
 @Composable
-fun StoreHeader(balance: Int, isLoading: Boolean, navController: NavController, tokenManager: TokenManager) {
+fun StoreHeader(
+    balance: Int,
+    isLoading: Boolean,
+    navController: NavController,
+    tokenManager: TokenManager
+) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Tienda", fontSize = 32.sp, fontWeight = FontWeight.Black, color = DarkerText)
+            Text(
+                text = "Tienda",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Black,
+                color = DarkerText
+            )
             Surface(color = PointsPillBg, shape = RoundedCornerShape(50)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.Default.Eco, null, tint = PointsTextGreen, modifier = Modifier.size(20.dp))
+                    Icon(
+                        Icons.Default.Eco,
+                        null,
+                        tint = PointsTextGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = if (isLoading) "..." else "$balance", color = PointsTextGreen, fontWeight = FontWeight.ExtraBold)
+                    Text(
+                        text = if (isLoading) "..." else "$balance",
+                        color = PointsTextGreen,
+                        fontWeight = FontWeight.ExtraBold
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     ProfileDropdown(navController, tokenManager)
                 }
@@ -200,19 +264,38 @@ fun FeaturedItemCard(item: StoreItem, onClick: () -> Unit) {
                     .padding(end = 10.dp),
                 tint = Color.Unspecified
             )
-            Column(modifier = Modifier.align(Alignment.BottomStart).padding(24.dp)) {
-                Text(text = item.name, color = Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Column(modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(24.dp)) {
+                Text(
+                    text = item.name,
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 22.sp
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 if (item.isOwned) {
                     Text("Obtenido", color = Color.LightGray, fontWeight = FontWeight.Bold)
                 } else {
                     Row(
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.White.copy(alpha = 0.2f)).padding(horizontal = 10.dp, vertical = 4.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.2f))
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Eco, null, tint = PriceTextGreen, modifier = Modifier.size(16.dp))
+                        Icon(
+                            Icons.Default.Eco,
+                            null,
+                            tint = PriceTextGreen,
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "${item.price}", color = PriceTextGreen, fontWeight = FontWeight.Black)
+                        Text(
+                            text = "${item.price}",
+                            color = PriceTextGreen,
+                            fontWeight = FontWeight.Black
+                        )
                     }
                 }
             }
@@ -223,19 +306,25 @@ fun FeaturedItemCard(item: StoreItem, onClick: () -> Unit) {
 @Composable
 fun StandardItemCard(item: StoreItem, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = if (item.isOwned) Color(0xFFF5F5F5) else Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = if (item.isOwned) 0.dp else 2.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Surface(
                 modifier = Modifier.size(70.dp),
                 shape = RoundedCornerShape(16.dp),
-                color = if (item.isOwned) Color.LightGray.copy(alpha = 0.2f) else item.color.copy(alpha = 0.1f)
+                color = if (item.isOwned) Color.LightGray.copy(alpha = 0.2f) else item.color.copy(
+                    alpha = 0.1f
+                )
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -247,18 +336,48 @@ fun StandardItemCard(item: StoreItem, onClick: () -> Unit) {
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(item.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center, color = if (item.isOwned) Color.Gray else DarkerText, modifier = Modifier.fillMaxWidth())
+            Text(
+                item.name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                color = if (item.isOwned) Color.Gray else DarkerText,
+                modifier = Modifier.fillMaxWidth()
+            )
             Spacer(modifier = Modifier.height(12.dp))
             if (item.isOwned) {
-                Text("Obtenido", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color.LightGray.copy(alpha = 0.3f)).padding(horizontal = 12.dp, vertical = 4.dp))
+                Text(
+                    "Obtenido",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.LightGray.copy(alpha = 0.3f))
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                )
             } else {
                 Row(
-                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(PointsPillBg).padding(horizontal = 10.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(PointsPillBg)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Eco, null, tint = PointsTextGreen, modifier = Modifier.size(14.dp))
+                    Icon(
+                        Icons.Default.Eco,
+                        null,
+                        tint = PointsTextGreen,
+                        modifier = Modifier.size(14.dp)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("${item.price}", fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = PointsTextGreen)
+                    Text(
+                        "${item.price}",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 13.sp,
+                        color = PointsTextGreen
+                    )
                 }
             }
         }
@@ -269,19 +388,43 @@ fun StandardItemCard(item: StoreItem, onClick: () -> Unit) {
 fun RedeemConfirmationDialog(item: StoreItem, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("¿Confirmar canje?", fontWeight = FontWeight.Black, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-        text = { Text("Se descontarán ${item.price} puntos por '${item.name}'.", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+        title = {
+            Text(
+                "¿Confirmar canje?",
+                fontWeight = FontWeight.Black,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                "Se descontarán ${item.price} puntos por '${item.name}'.",
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
         confirmButton = {
-            Button(onClick = onConfirm, colors = ButtonDefaults.buttonColors(containerColor = ConfirmGreen), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = ConfirmGreen),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text("Confirmar", fontWeight = FontWeight.Bold)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Cancelar", color = Color.Gray) } },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Cancelar", color = Color.Gray) }
+        },
         containerColor = Color.White, shape = RoundedCornerShape(28.dp)
     )
 }
 
-class PointsViewModelFactory(private val context: Context, private val api: ReciclappApi) : ViewModelProvider.Factory {
+class PointsViewModelFactory(private val context: Context, private val api: ReciclappApi) :
+    ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PointsViewModel::class.java)) {
 
@@ -302,7 +445,7 @@ fun ItemEntity.toStoreItem(isOwned: Boolean): StoreItem {
 
         iconResId = when (this.icon) {
             "shopping_bag" -> R.drawable.ic_totebag
-            "premium" ->  R.drawable.ic_premium_crown
+            "premium" -> R.drawable.ic_premium_crown
             "oro" -> R.drawable.ic_gold_deco
             "eco" -> R.drawable.ic_eco_badge
             "tree" -> R.drawable.ic_plant_tree

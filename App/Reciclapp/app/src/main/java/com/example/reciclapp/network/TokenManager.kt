@@ -3,9 +3,9 @@ package com.example.reciclapp.network
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import androidx.core.content.edit
 import java.io.File
 
 class TokenManager private constructor(private val context: Context) {
@@ -14,7 +14,7 @@ class TokenManager private constructor(private val context: Context) {
         @Volatile
         private var instance: TokenManager? = null
 
-        fun getInstance(context : Context) =
+        fun getInstance(context: Context) =
             instance ?: synchronized(this) {
                 instance ?: TokenManager(context).also { instance = it }
             }

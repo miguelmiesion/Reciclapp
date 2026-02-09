@@ -15,11 +15,13 @@ interface TransactionDao {
     @Query("SELECT * FROM purchase_history ORDER BY timestamp DESC")
     fun getAllPurchases(): Flow<List<PurchaseEntity>>
 
-    @Query("""
+    @Query(
+        """
     SELECT SUM(item_table.cost) 
     FROM purchase_history 
     INNER JOIN item_table ON purchase_history.itemId = item_table.itemId
-""")
+"""
+    )
     fun getTotalSpentAmount(): Flow<Int?>
 
     @Query("SELECT itemId FROM purchase_history")

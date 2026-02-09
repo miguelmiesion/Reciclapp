@@ -1,7 +1,14 @@
 package com.example.reciclapp.views
 
 import android.util.Log
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -11,8 +18,20 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,26 +51,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.reciclapp.components.CommonUI
 import com.example.reciclapp.components.LocalPopupState
-import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.RetrofitClient
-import com.example.reciclapp.network.SignupRequest
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.repository.AuthRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.LightTextColor
 import com.example.reciclapp.viewmodels.AuthViewModel
 import com.example.reciclapp.viewmodels.AuthViewModelFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun RegisterScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
 
-    val viewModel : AuthViewModel = viewModel(
+    val viewModel: AuthViewModel = viewModel(
         factory = AuthViewModelFactory(authRepository, tokenManager)
     )
     val uiState by viewModel.uiState.collectAsState()
@@ -68,7 +81,8 @@ fun RegisterScreen(navController: NavController, tokenManager: TokenManager) {
     val isPasswordLengthValid = password.length >= 6
     val isPasswordComplex = password.any { it.isDigit() } && password.any { it.isUpperCase() }
     val doPasswordsMatch = password == confirmPassword && password.isNotEmpty()
-    val isFormValid = username.isNotEmpty() && isPasswordLengthValid && isPasswordComplex && doPasswordsMatch
+    val isFormValid =
+        username.isNotEmpty() && isPasswordLengthValid && isPasswordComplex && doPasswordsMatch
 
     LaunchedEffect(uiState.isRegisterSuccess) {
         if (uiState.isRegisterSuccess) {
@@ -162,7 +176,8 @@ fun RegisterScreen(navController: NavController, tokenManager: TokenManager) {
                 label = { Text("Contraseña") },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 trailingIcon = {
-                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val image =
+                        if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(imageVector = image, contentDescription = "Toggle Password")
                     }
@@ -184,7 +199,9 @@ fun RegisterScreen(navController: NavController, tokenManager: TokenManager) {
                     text = "Mín. 6 caracteres, 1 mayúscula, 1 número",
                     color = Color.Red,
                     fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.Start).padding(start = 8.dp)
+                    modifier = Modifier
+                        .align(Alignment.Start)
+                        .padding(start = 8.dp)
                 )
             }
 
@@ -196,7 +213,8 @@ fun RegisterScreen(navController: NavController, tokenManager: TokenManager) {
                 label = { Text("Confirmá tu contraseña") },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 trailingIcon = {
-                    val image = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val image =
+                        if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                         Icon(imageVector = image, contentDescription = "Toggle Password")
                     }
@@ -229,9 +247,15 @@ fun RegisterScreen(navController: NavController, tokenManager: TokenManager) {
                 ),
                 shape = RoundedCornerShape(25.dp)
             ) {
-                Text(text = if (!uiState.isLoading) "Registrar" else "Registrando..." , fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor) }
+                Text(
+                    text = if (!uiState.isLoading) "Registrar" else "Registrando...",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = LightTextColor
+                )
             }
+        }
 
-            Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }

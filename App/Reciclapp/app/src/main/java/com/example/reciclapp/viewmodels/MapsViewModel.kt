@@ -1,7 +1,5 @@
 package com.example.reciclapp.viewmodels
 
-import android.content.Context
-import android.location.Location
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -15,8 +13,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 
-data class MapsUiState (
-    val stations : List<Station> = emptyList(),
+data class MapsUiState(
+    val stations: List<Station> = emptyList(),
     val routePoints: List<GeoPoint>? = null,
     val currentAddress: String? = null,
     val isLoading: Boolean = false,
@@ -39,12 +37,23 @@ class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                when(val result = repository.getStations()) {
+                when (val result = repository.getStations()) {
                     is NetworkResult.Success -> {
-                        _uiState.update { it.copy(stations = result.data ?: emptyList(), isLoading = false) }
+                        _uiState.update {
+                            it.copy(
+                                stations = result.data ?: emptyList(),
+                                isLoading = false
+                            )
+                        }
                     }
+
                     is NetworkResult.Error -> {
-                        _uiState.update { it.copy(error = result.message ?: "Error al cargar estaciones", isLoading = false) }
+                        _uiState.update {
+                            it.copy(
+                                error = result.message ?: "Error al cargar estaciones",
+                                isLoading = false
+                            )
+                        }
                     }
                 }
             } catch (e: Exception) {

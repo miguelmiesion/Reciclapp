@@ -4,13 +4,12 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.reciclapp.database.dao.ItemDao
 import com.example.reciclapp.database.dao.TransactionDao
 import com.example.reciclapp.database.dao.UserDao
-import com.example.reciclapp.database.entities.UserEntity
-import com.example.reciclapp.database.entities.PurchaseEntity
 import com.example.reciclapp.database.entities.ItemEntity
+import com.example.reciclapp.database.entities.PurchaseEntity
+import com.example.reciclapp.database.entities.UserEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

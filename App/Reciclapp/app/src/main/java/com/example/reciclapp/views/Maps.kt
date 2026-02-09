@@ -8,46 +8,26 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -60,8 +40,6 @@ import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.Station
 import com.example.reciclapp.repository.MapsRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
-import com.example.reciclapp.ui.theme.DarkerText
-import com.example.reciclapp.ui.theme.LightTextColor
 import com.example.reciclapp.ui.theme.LighterPrimary
 import com.example.reciclapp.viewmodels.MapsViewModel
 import com.example.reciclapp.viewmodels.MapsViewModelFactory
@@ -78,7 +56,8 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 fun MapsScreen(navController: NavController) {
     val context = LocalContext.current
 
-    Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context))
+    Configuration.getInstance()
+        .load(context, PreferenceManager.getDefaultSharedPreferences(context))
     Configuration.getInstance().userAgentValue = context.packageName
 
     val viewModel: MapsViewModel = viewModel(
@@ -91,7 +70,10 @@ fun MapsScreen(navController: NavController) {
 
     var hasLocationPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
         )
     }
 
@@ -115,7 +97,8 @@ fun MapsScreen(navController: NavController) {
     ) { paddingValues ->
         if (state.isLoading) {
             Box(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {

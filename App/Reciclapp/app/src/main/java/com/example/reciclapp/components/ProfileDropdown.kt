@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,19 +33,22 @@ import com.example.reciclapp.MainActivity
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.repository.AuthRepository
+import com.example.reciclapp.ui.theme.ErrorColor
+import com.example.reciclapp.ui.theme.TextColor
 import com.example.reciclapp.viewmodels.AuthViewModel
 import com.example.reciclapp.viewmodels.AuthViewModelFactory
 
-import com.example.reciclapp.ui.theme.ErrorColor
-import com.example.reciclapp.ui.theme.TextColor
-
 @Composable
-fun ProfileDropdown(navController: NavController, tokenManager: TokenManager, modifier: Modifier = Modifier) {
+fun ProfileDropdown(
+    navController: NavController,
+    tokenManager: TokenManager,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
 
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
-    val viewModel : AuthViewModel = viewModel(
+    val viewModel: AuthViewModel = viewModel(
         factory = AuthViewModelFactory(authRepository, tokenManager)
     )
 

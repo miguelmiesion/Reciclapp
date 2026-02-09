@@ -1,7 +1,17 @@
 package com.example.reciclapp.views
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -10,8 +20,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,20 +48,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.components.ReciclappBottomBar
 import com.example.reciclapp.network.RetrofitClient
-import com.example.reciclapp.ui.theme.DarkerPrimary
-import com.example.reciclapp.ui.theme.Primary
-import com.example.reciclapp.ui.theme.TextColor
-import com.example.reciclapp.ui.theme.Gold
-import com.example.reciclapp.ui.theme.Silver
+import com.example.reciclapp.network.TokenManager
+import com.example.reciclapp.repository.RankingRepository
 import com.example.reciclapp.ui.theme.Bronze
+import com.example.reciclapp.ui.theme.DarkerPrimary
+import com.example.reciclapp.ui.theme.Gold
+import com.example.reciclapp.ui.theme.Primary
+import com.example.reciclapp.ui.theme.Silver
+import com.example.reciclapp.ui.theme.TextColor
 import com.example.reciclapp.viewmodels.RankingViewModel
 import com.example.reciclapp.viewmodels.RankingViewModelFactory
-import com.example.reciclapp.repository.RankingRepository
-
-import com.example.reciclapp.components.ProfileDropdown
-import com.example.reciclapp.network.TokenManager
 
 @Composable
 fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
@@ -117,7 +142,10 @@ fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
                                     rank = index + 1,
                                     username = user.username,
                                     points = user.totalPoints,
-                                    isCurrentUser = user.username.equals(state.currentUserName, ignoreCase = true)
+                                    isCurrentUser = user.username.equals(
+                                        state.currentUserName,
+                                        ignoreCase = true
+                                    )
                                 )
                             }
                         }
@@ -217,7 +245,11 @@ fun RankingItem(rank: Int, username: String, points: Int?, isCurrentUser: Boolea
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(if (isCurrentUser) Color.White.copy(alpha = 0.5f) else Color.LightGray.copy(alpha = 0.3f))
+                .background(
+                    if (isCurrentUser) Color.White.copy(alpha = 0.5f) else Color.LightGray.copy(
+                        alpha = 0.3f
+                    )
+                )
                 .padding(4.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))

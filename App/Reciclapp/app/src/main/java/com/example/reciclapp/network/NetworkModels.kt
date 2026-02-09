@@ -58,7 +58,7 @@ data class UserPositionResponse(
 
 data class UserPointsResponse(
     @SerializedName("puntos")
-    val points : Int,
+    val points: Int,
 )
 
 

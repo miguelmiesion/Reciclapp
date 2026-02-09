@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 
 sealed class ScanResult {
-    data class Success(val message : String) : ScanResult()
+    data class Success(val message: String) : ScanResult()
     data class Error(val message: String) : ScanResult()
 }
 

@@ -1,7 +1,7 @@
 package com.example.reciclapp.network
 
-import retrofit2.Response
 import org.json.JSONObject
+import retrofit2.Response
 
 abstract class BaseApiResponse {
 
@@ -20,14 +20,12 @@ abstract class BaseApiResponse {
                 val jsonObject = JSONObject(errorBody ?: "")
 
                 val message = jsonObject.names()[0] as String
-                if(jsonObject.has(message)) {
+                if (jsonObject.has(message)) {
                     jsonObject.getString(message)
                         .replace("[", "")
                         .replace("]", "")
                         .replace("\"", "")
-                }
-
-                else{
+                } else {
                     "Error del servidor: ${response.code()}"
                 }
 

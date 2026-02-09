@@ -1,10 +1,17 @@
 package com.example.reciclapp.views
 
 import android.app.AlertDialog
-import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,11 +21,24 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -30,33 +50,25 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.reciclapp.components.CommonUI
 import com.example.reciclapp.components.LocalPopupState
+import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
+import com.example.reciclapp.repository.AuthRepository
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.LightTextColor
-import com.example.reciclapp.network.RetrofitClient
-import com.example.reciclapp.network.LoginRequest
-import com.example.reciclapp.network.NetworkResult
-import com.example.reciclapp.repository.AuthRepository
 import com.example.reciclapp.viewmodels.AuthViewModel
 import com.example.reciclapp.viewmodels.AuthViewModelFactory
-import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
     val authRepository = remember { AuthRepository(RetrofitClient.getApi(context)) }
 
-    val viewModel : AuthViewModel = viewModel(
-    factory = AuthViewModelFactory(authRepository, tokenManager)
+    val viewModel: AuthViewModel = viewModel(
+        factory = AuthViewModelFactory(authRepository, tokenManager)
     )
 
     val uiState by viewModel.uiState.collectAsState()
@@ -145,7 +157,12 @@ fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
                 onValueChange = { username = it },
                 label = { Text("Nombre de usuario") },
                 placeholder = { Text("Ingresá tu nombre de usuario") },
-                leadingIcon = { Icon(imageVector = Icons.Default.Person, contentDescription = "User Icon") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "User Icon"
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
@@ -164,9 +181,15 @@ fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
                 onValueChange = { password = it },
                 label = { Text("Contraseña") },
                 placeholder = { Text("Ingresá tu contraseña") },
-                leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = "Lock Icon") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Lock Icon"
+                    )
+                },
                 trailingIcon = {
-                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val image =
+                        if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(imageVector = image, contentDescription = "Toggle Password")
                     }
@@ -221,7 +244,12 @@ fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
                 ),
                 shape = RoundedCornerShape(25.dp)
             ) {
-                Text(text = if (!uiState.isLoading) "Login" else "Iniciando sesión...", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = LightTextColor)
+                Text(
+                    text = if (!uiState.isLoading) "Login" else "Iniciando sesión...",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = LightTextColor
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))

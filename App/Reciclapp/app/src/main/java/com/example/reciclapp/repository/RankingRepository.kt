@@ -4,8 +4,8 @@ import com.example.reciclapp.network.BaseApiResponse
 import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.RankingEntry
 import com.example.reciclapp.network.ReciclappApi
-import com.example.reciclapp.network.UserProfileResponse
 import com.example.reciclapp.network.UserPositionResponse
+import com.example.reciclapp.network.UserProfileResponse
 
 class RankingRepository(private val api: ReciclappApi) : BaseApiResponse() {
 

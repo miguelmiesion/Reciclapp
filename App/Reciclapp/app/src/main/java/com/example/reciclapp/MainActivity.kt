@@ -12,19 +12,19 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.reciclapp.ui.theme.ReciclappTheme
-import com.example.reciclapp.views.LoginScreen
-import com.example.reciclapp.views.RegisterScreen
-import com.example.reciclapp.views.ScanQrScreen
-import com.example.reciclapp.components.PopupController
 import com.example.reciclapp.components.LocalPopupState
+import com.example.reciclapp.components.PopupController
 import com.example.reciclapp.components.ResultPopup
 import com.example.reciclapp.network.TokenManager
-import com.example.reciclapp.views.ProfileScreen
+import com.example.reciclapp.ui.theme.ReciclappTheme
+import com.example.reciclapp.views.LoginScreen
 import com.example.reciclapp.views.MapsScreen
-import isTokenValid
+import com.example.reciclapp.views.ProfileScreen
 import com.example.reciclapp.views.RankingScreen
+import com.example.reciclapp.views.RegisterScreen
+import com.example.reciclapp.views.ScanQrScreen
 import com.example.reciclapp.views.StoreScreen
+import isTokenValid
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,11 +33,12 @@ class MainActivity : ComponentActivity() {
 
         val tokenManager = TokenManager.getInstance(applicationContext)
 
-        val startDestination = if (isTokenValid(tokenManager.getAccessToken()) || isTokenValid(tokenManager.getRefreshToken())) {
-            "home_screen"
-        } else {
-            "login_screen"
-        }
+        val startDestination =
+            if (isTokenValid(tokenManager.getAccessToken()) || isTokenValid(tokenManager.getRefreshToken())) {
+                "home_screen"
+            } else {
+                "login_screen"
+            }
 
         setContent {
             ReciclappTheme {

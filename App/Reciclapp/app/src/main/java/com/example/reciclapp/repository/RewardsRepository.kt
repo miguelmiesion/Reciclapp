@@ -1,6 +1,5 @@
 package com.example.reciclapp.repository
 
-import androidx.room.withTransaction
 import com.example.reciclapp.database.ReciclappDatabase
 import com.example.reciclapp.database.entities.ItemEntity
 import com.example.reciclapp.database.entities.PurchaseEntity
@@ -10,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
 
 class RewardsRepository(
     private val api: ReciclappApi,

@@ -2,7 +2,10 @@ package com.example.reciclapp.network
 
 import retrofit2.Call
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface ReciclappApi {
 
@@ -38,14 +41,14 @@ interface ReciclappApi {
     @GET("api/puntos/")
     suspend fun getUserPoints(
         @Query("id_usuario") userId: Int? = null
-    ) : Response<UserPointsResponse>
+    ): Response<UserPointsResponse>
 
     @GET("api/estaciones/")
-    suspend fun getStations() : Response<List<Station>>
+    suspend fun getStations(): Response<List<Station>>
 
     @GET("api/estaciones/")
     suspend fun getStationById(
         @Query("id_estacion") stationId: Int
-    ) : Response<Station>
+    ): Response<Station>
 }
 

@@ -51,6 +51,7 @@ class ProfileViewModel(
         ProfileUiState(
             userId = userEntity?.id ?: 0,
             username = userEntity?.username ?: "Cargando...",
+            points = balance,
             purchaseHistory = historyUi,
             isLoading = false
         )

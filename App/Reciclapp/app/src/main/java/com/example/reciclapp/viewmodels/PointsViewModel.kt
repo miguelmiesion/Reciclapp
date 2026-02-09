@@ -28,12 +28,11 @@ class PointsViewModel(
     val uiState: StateFlow<PointsUiState> = combine(
         repository.userBalance,
         repository.allItems,
-        repository.ownedItemIds, // El nuevo flujo
+        repository.ownedItemIds,
         _isLoading,
         _error
     ) { balance, entities, ownedIds, loading, err ->
 
-        // Mapeamos las entidades a modelos de UI calculando isOwned
         val uiItems = entities.map { entity ->
             entity.toStoreItem(isOwned = ownedIds.contains(entity.itemId))
         }
@@ -71,8 +70,6 @@ class PointsViewModel(
             val result = repository.redeemItem(itemId)
 
             result.onSuccess {
-                // No necesitas llamar a refreshData() manualmente para los items,
-                // Room detectará la nueva transacción y actualizará el Flow automáticamente.
                 refreshData()
                 onSuccess()
             }.onFailure { e ->

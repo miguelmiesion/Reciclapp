@@ -53,6 +53,8 @@ fun ProfileDropdown(navController: NavController, tokenManager: TokenManager, mo
     val uiState by viewModel.uiState.collectAsState()
     val popupController = LocalPopupState.current
 
+    val currentRoute = navController.currentDestination?.route
+
     LaunchedEffect(uiState.isLogoutSuccess) {
         if (uiState.isLogoutSuccess) {
             val intent = Intent(context, MainActivity::class.java)
@@ -91,13 +93,15 @@ fun ProfileDropdown(navController: NavController, tokenManager: TokenManager, mo
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            DropdownMenuItem(
-                text = { Text("Perfil", color = TextColor) },
-                onClick = {
-                    expanded = false
-                    navController.navigate("profile_screen")
-                }
-            )
+            if (currentRoute != "profile_screen") {
+                DropdownMenuItem(
+                    text = { Text("Perfil", color = TextColor) },
+                    onClick = {
+                        expanded = false
+                        navController.navigate("profile_screen")
+                    }
+                )
+            }
             DropdownMenuItem(
                 text = { Text("Cerrar sesión", color = ErrorColor) },
                 onClick = {

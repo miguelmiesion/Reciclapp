@@ -38,19 +38,20 @@ import com.example.reciclapp.ui.theme.Primary
 import com.example.reciclapp.ui.theme.TextColor
 import com.example.reciclapp.viewmodels.HistoryUiModel
 import com.example.reciclapp.viewmodels.ProfileViewModel
+import androidx.compose.ui.res.painterResource
+import com.example.reciclapp.R
+import androidx.core.graphics.toColorInt
 
 @Composable
 fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
 
-    // Usamos la Factory correcta con la Base de Datos
     val viewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModelFactory(context)
     )
 
     val state by viewModel.uiState.collectAsState()
 
-    // Solo actualizamos datos remotos al entrar, lo local es reactivo
     LaunchedEffect(Unit) {
         viewModel.refreshUserData()
     }
@@ -77,7 +78,7 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Administrá tus datos y revisá tu progreso",
+                text = "Observá tus datos y revisá tu progreso",
                 fontSize = 14.sp,
                 color = Color.Gray,
                 modifier = Modifier.align(Alignment.Start)
@@ -92,7 +93,6 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
                     CircularProgressIndicator(color = Primary)
                 }
             } else {
-                // TARJETA DE USUARIO
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
@@ -129,11 +129,6 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
                             color = Color.White
                         )
 
-                        Text(
-                            text = "Socio #${state.userId}",
-                            fontSize = 14.sp,
-                            color = Color.LightGray
-                        )
 
                         Spacer(modifier = Modifier.height(24.dp))
                         HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
@@ -186,7 +181,7 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
                 Button(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
@@ -202,7 +197,7 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
 @Composable
 fun StatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(Icons.Default.Star, null, tint = Color(0xFFFFD700), modifier = Modifier.size(24.dp))
+        Icon(Icons.Default.Eco, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.height(4.dp))
         Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
         Text(label, fontSize = 12.sp, color = Color.LightGray)
@@ -212,33 +207,57 @@ fun StatItem(label: String, value: String) {
 @Composable
 fun PurchasedItemCard(item: HistoryUiModel) {
     Card(
-        modifier = Modifier.width(140.dp).height(110.dp),
-        colors = CardDefaults.cardColors(containerColor = TextColor),
+        modifier = Modifier
+            .width(140.dp)
+            .defaultMinSize(minHeight = 110.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF5F7161)),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Mapeo dinámico del string iconName a ImageVector
-            val iconVector = when (item.iconName) {
-                "shopping_bag" -> Icons.Default.ShoppingBag
-                "premium" -> Icons.Default.WorkspacePremium
-                "eco" -> Icons.Default.Eco
-                else -> Icons.Default.ShoppingBag
+            // Lógica de mapeo: Usamos el nombre para saber qué imagen mostrar
+            // (Igual que como lo hicimos en la Tienda)
+            val iconResId = when {
+                item.itemName.contains("Totebag") -> R.drawable.ic_totebag
+                item.itemName.contains("Oro") -> R.drawable.ic_gold_deco
+                item.itemName.contains("Badge") -> R.drawable.ic_eco_badge
+                item.itemName.contains("Premium") -> R.drawable.ic_premium_crown
+                item.itemName.contains("Árbol") -> R.drawable.ic_plant_tree
+                else -> R.drawable.ic_totebag
             }
 
-            // Parseo seguro del color
-            val iconColor = try {
-                Color(android.graphics.Color.parseColor(item.colorHex))
-            } catch (e: Exception) { Color.LightGray }
+            // CAMBIO CLAVE:
+            // 1. Usamos painterResource para cargar el PNG
+            // 2. Usamos tint = Color.Unspecified para que se vean los colores originales
+            Icon(
+                painter = painterResource(id = iconResId),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(40.dp)
+            )
 
-            Icon(imageVector = iconVector, contentDescription = null, tint = iconColor, modifier = Modifier.size(32.dp))
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = item.itemName, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1)
-            Text(text = "${item.cost} pts", color = Color.Gray, fontSize = 11.sp)
+
+            Text(
+                text = item.itemName,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+
+            Text(
+                text = "${item.cost} pts",
+                color = Color.LightGray,
+                fontSize = 11.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
         }
     }
 }
@@ -248,7 +267,6 @@ class ProfileViewModelFactory(private val context: Context) : ViewModelProvider.
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
             val db = ReciclappDatabase.getDatabase(context, kotlinx.coroutines.MainScope())
             val api = RetrofitClient.getApi(context)
-            // Reutilizamos RewardsRepository porque ya tiene acceso a las tablas que necesitamos
             return ProfileViewModel(RewardsRepository(api, db)) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

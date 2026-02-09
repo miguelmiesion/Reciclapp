@@ -10,33 +10,29 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AllInclusive
 import androidx.compose.material.icons.filled.Eco
-import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource // IMPORTANTE: Para cargar PNGs
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.core.graphics.toColorInt
 
+import com.example.reciclapp.R // IMPORTANTE: Tu archivo de recursos
 import com.example.reciclapp.components.ReciclappBottomBar
 import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.components.LocalPopupState
-import com.example.reciclapp.components.ResultPopup
 import com.example.reciclapp.viewmodels.PointsViewModel
 import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.RetrofitClient
@@ -46,12 +42,13 @@ import com.example.reciclapp.database.entities.ItemEntity
 import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.ui.theme.*
 
+// CAMBIO 1: El icono ahora es un Int (ID de recurso R.drawable.xxx), no un ImageVector
 data class StoreItem(
     val id: Int,
     val name: String,
     val price: Int,
     val isFeatured: Boolean,
-    val icon: ImageVector,
+    val iconResId: Int,
     val color: Color,
     val isOwned: Boolean = false
 )
@@ -67,7 +64,6 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
 
     val state by viewModel.uiState.collectAsState()
 
-    // Como el ViewModel ya nos da StoreItems mapeados, solo filtramos
     val featuredItems = remember(state.storeItems) {
         state.storeItems.filter { it.isFeatured }
     }
@@ -128,7 +124,6 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
                 }
                 items(featuredItems, span = { GridItemSpan(2) }) { item ->
                     FeaturedItemCard(item = item) {
-                        // LÓGICA DE PROTECCIÓN AQUÍ
                         if (item.isOwned) {
                             popupController.showError("Ya tenés este item")
                         } else {
@@ -146,7 +141,6 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
 
             items(catalogItems) { item ->
                 StandardItemCard(item = item) {
-                    // LÓGICA DE PROTECCIÓN AQUÍ
                     if (item.isOwned) {
                         popupController.showError("Ya tenés este item")
                     } else {
@@ -200,11 +194,15 @@ fun FeaturedItemCard(item: StoreItem, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            // CAMBIO 2: Usamos painterResource con el ID del PNG
             Icon(
-                imageVector = item.icon,
+                painter = painterResource(id = item.iconResId),
                 contentDescription = null,
-                modifier = Modifier.size(140.dp).align(Alignment.CenterEnd).padding(end = 10.dp),
-                tint = Color.White.copy(alpha = 0.1f)
+                modifier = Modifier
+                    .size(140.dp)
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 10.dp),
+                tint = Color.Unspecified
             )
             Column(modifier = Modifier.align(Alignment.BottomStart).padding(24.dp)) {
                 Text(text = item.name, color = Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
@@ -244,7 +242,14 @@ fun StandardItemCard(item: StoreItem, onClick: () -> Unit) {
                 color = if (item.isOwned) Color.LightGray.copy(alpha = 0.2f) else item.color.copy(alpha = 0.1f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(item.icon, null, modifier = Modifier.size(36.dp), tint = if (item.isOwned) Color.Gray else item.color)
+                    // CAMBIO 3: Usamos painterResource.
+                    // Color.Unspecified deja ver los colores originales del PNG (importante para iconos lindos)
+                    Icon(
+                        painter = painterResource(id = item.iconResId),
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp),
+                        tint = if (item.isOwned) Color.Gray else Color.Unspecified
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -285,7 +290,7 @@ fun RedeemConfirmationDialog(item: StoreItem, onDismiss: () -> Unit, onConfirm: 
 class PointsViewModelFactory(private val context: Context, private val api: ReciclappApi) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PointsViewModel::class.java)) {
-            // Usamos el scope del proceso de la app para la inicialización de la DB
+
             val db = ReciclappDatabase.getDatabase(context, kotlinx.coroutines.MainScope())
             return PointsViewModel(RewardsRepository(api, db)) as T
         }
@@ -293,22 +298,26 @@ class PointsViewModelFactory(private val context: Context, private val api: Reci
     }
 }
 
+// CAMBIO 4: Lógica de Mapeo de String (DB) a Drawable (App)
 fun ItemEntity.toStoreItem(isOwned: Boolean): StoreItem {
     return StoreItem(
         id = this.itemId.toInt(),
         name = this.itemName,
         price = this.cost,
         isFeatured = this.isFeatured,
-        // Mapeo de iconos
-        icon = when (this.icon) {
-            "shopping_bag" -> Icons.Default.ShoppingBag
-            "premium" -> Icons.Default.WorkspacePremium
-            "eco" -> Icons.Default.Eco
-            else -> Icons.Default.ShoppingBag
+
+
+        iconResId = when (this.icon) {
+            "shopping_bag" -> R.drawable.ic_totebag
+            "premium" ->  R.drawable.ic_premium_crown
+            "oro" -> R.drawable.ic_gold_deco
+            "eco" -> R.drawable.ic_eco_badge
+            "tree" -> R.drawable.ic_plant_tree
+            else -> R.drawable.ic_totebag
         },
 
         color = try {
-            Color(android.graphics.Color.parseColor(this.color))
+            Color(this.color.toColorInt())
         } catch (e: Exception) {
             Color.Gray
         },

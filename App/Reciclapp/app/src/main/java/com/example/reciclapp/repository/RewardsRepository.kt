@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+
 class RewardsRepository(
     private val api: ReciclappApi,
     private val db: ReciclappDatabase
@@ -24,54 +26,41 @@ class RewardsRepository(
     val ownedItemIds: Flow<List<Long>> = transactionDao.getPurchasedItemIds()
 
     val currentUser = userDao.getUser()
-    val userBalance: Flow<Int> = userDao.getUser()
-        .combine(transactionDao.getTotalSpentAmount()) { user, spentAmount ->
+    val userBalance: Flow<Int> = userDao.getUser() // Flow A
+        .combine(transactionDao.getTotalSpentAmount()) { user, spentAmount -> // Flow B
+
             val basePoints = user?.pointsBalance ?: 0
             val totalSpent = spentAmount ?: 0
+
             if (basePoints - totalSpent < 0) 0 else (basePoints - totalSpent)
         }
+
     suspend fun refreshUserBalance(): Result<Unit> {
         return try {
-            // A. INTENTO RECUPERAR EL NOMBRE (Sin romper nada si falla)
-            var currentName = "Usuario"
-            try {
-                // Intentamos leer el que ya existe en la base de datos para no perderlo
-                val localUser = userDao.getUser().firstOrNull()
-                if (localUser != null) {
-                    currentName = localUser.username
-                }
-
-                // Intentamos obtener el nuevo de la API
-                val profileResponse = api.getUserProfile()
-                if (profileResponse.isSuccessful && profileResponse.body() != null) {
-                    currentName = profileResponse.body()!!.username
-                }
-            } catch (e: Exception) {
-                // Si falla obtener el nombre, ignoramos el error y seguimos con los puntos
-                e.printStackTrace()
-            }
-
-            // B. RECUPERO LOS PUNTOS (Tu lógica original intacta)
             val response = api.getUserPoints()
             if (response.isSuccessful && response.body() != null) {
                 val remotePoints = response.body()!!.points
 
-                // C. GUARDO: El nombre recuperado + Los puntos recuperados
+                val localUser = userDao.getUser().firstOrNull()
+
+                val currentName = localUser?.username ?: "Usuario"
+
                 userDao.insertUser(
                     UserEntity(
                         id = 1,
-                        username = currentName, // <--- Aquí va el nombre real
+                        username = currentName,
                         pointsBalance = remotePoints
                     )
                 )
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Error al obtener puntos de la API"))
+                Result.failure(Exception("Error API"))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
     suspend fun redeemItem(itemId: Long): Result<Unit> {
         return try {
             val itemCost = itemDao.getItemCost(itemId).first()

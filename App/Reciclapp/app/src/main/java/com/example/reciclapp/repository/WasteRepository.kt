@@ -17,42 +17,11 @@ import kotlinx.coroutines.flow.flow
 
 class WasteRepository(private val api: ReciclappApi, private val db: ReciclappDatabase) : BaseApiResponse() {
 
-    private val profileRepository = ProfileRepository(api)
+    private val profileRepository = ProfileRepository(api, db)
 
     private val userDao = db.userDao()
 
-    val user: Flow<UserEntity?> = flow {
-        val userProfile = profileRepository.getUserProfile()
-        val username = userProfile.data?.username
-
-        Log.i("USER FLOW", username.toString())
-
-        if (username != null) {
-            val flow = userDao.getUser(username)
-            Log.i("USER FLOW", flow.firstOrNull().toString())
-            if (flow.firstOrNull() == null) {
-                val result = safeApiCall { api.getUserPoints() }
-                when (result) {
-                    is NetworkResult.Success -> {
-                        if (result.data != null) {
-                            userDao.upsertUser(UserEntity(
-                                username = username,
-                                pointsBalance = result.data.points
-                            ))
-                        } else {
-                            emit(null)
-                        }
-                    }
-                    is NetworkResult.Error -> {
-                        emit(null)
-                    }
-                }
-            }
-            emitAll(flow)
-        } else {
-            emit(null)
-        }
-    }
+    val user: Flow<UserEntity?> = profileRepository.user
 
     suspend fun claimWaste(idWaste: String, points: Int): NetworkResult<Void> {
         val request = WasteClaimRequest(idWaste = idWaste)
@@ -65,7 +34,6 @@ class WasteRepository(private val api: ReciclappApi, private val db: ReciclappDa
                 try {
                     db.withTransaction {
                         val localUser = user.firstOrNull() ?: throw Exception("No se encontró al usuario")
-                        Log.i("LOCAL USER", localUser.toString())
                         val newBalance = localUser.pointsBalance + points
                         userDao.upsertUser(UserEntity(
                             username = localUser.username,

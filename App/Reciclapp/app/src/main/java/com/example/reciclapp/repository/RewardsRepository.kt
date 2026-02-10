@@ -23,7 +23,7 @@ class RewardsRepository(
     private val api: ReciclappApi,
     private val db: ReciclappDatabase,
 ) : BaseApiResponse() {
-    private val profileRepository = ProfileRepository(api)
+    private val profileRepository = ProfileRepository(api, db)
 
     private val userDao = db.userDao()
     private val transactionDao = db.transactionDao()
@@ -34,45 +34,7 @@ class RewardsRepository(
 
     val ownedItemIds: Flow<List<Long>> = transactionDao.getPurchasedItemIds()
 
-    val user: Flow<UserEntity?> = flow {
-        val userProfile = profileRepository.getUserProfile()
-        val username = userProfile.data?.username
-
-        if (username != null) {
-            val dbFlow = userDao.getUser(username)
-            val localUser = dbFlow.firstOrNull()
-
-            if (localUser == null) {
-                Log.i("USER FLOW", "Usuario nuevo o DB vacía. Obteniendo puntos iniciales...")
-
-                val result = safeApiCall { api.getUserPoints() }
-
-                when (result) {
-                    is NetworkResult.Success -> {
-                        if (result.data != null) {
-                            // Insertamos el usuario inicial
-                            userDao.upsertUser(UserEntity(
-                                username = username,
-                                pointsBalance = result.data.points
-                            ))
-                            emitAll(dbFlow)
-                        } else {
-                            emit(null)
-                        }
-                    }
-                    is NetworkResult.Error -> {
-                        Log.e("USER FLOW", "Error al obtener puntos iniciales")
-                        emit(null)
-                    }
-                }
-            } else {
-                Log.i("USER FLOW", "Usuario encontrado en DB local. Usando saldo local.")
-                emitAll(dbFlow)
-            }
-        } else {
-            emit(null)
-        }
-    }
+    val user: Flow<UserEntity?> = profileRepository.user
 
     suspend fun redeemItem(itemId: Long): Result<Unit> {
         return try {

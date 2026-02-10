@@ -15,38 +15,44 @@ class ProfileRepository(val api: ReciclappApi, val db: ReciclappDatabase) : Base
     private val userDao = db.userDao()
 
     val user: Flow<UserEntity?> = flow {
-        val userProfile = getUserProfile()
-        val username = userProfile.data?.username
+        if(ensureUserSynchronized()) {
+            val userProfile = getUserProfile()
+            val username = userProfile.data?.username
 
-        if (username != null) {
-            val flow = userDao.getUser(username)
-            val localUser = flow.firstOrNull()
-            if (localUser == null) {
-                val result = safeApiCall {
-                    api.getUserPoints()
-                }
-                when (result) {
-                    is NetworkResult.Success -> {
-                        if (result.data != null) {
-                            userDao.upsertUser(UserEntity(
-                                username = username,
-                                pointsBalance = result.data.points
-                            ))
-                            emitAll(flow)
-                        } else {
-                            emit(null)
-                        }
-                    }
-                    is NetworkResult.Error -> {
-                        emit(null)
-                    }
-                }
-            } else {
+            if (username != null) {
+                val flow = userDao.getUser(username)
                 emitAll(flow)
+            } else {
+                emit(null)
             }
-        } else {
+        }
+        else{
             emit(null)
         }
+    }
+
+    suspend fun ensureUserSynchronized(): Boolean {
+        val profileResult = getUserProfile()
+
+        if (profileResult is NetworkResult.Success) {
+            val username = profileResult.data?.username ?: return false
+
+            val localUser = userDao.getUser(username).firstOrNull()
+
+            if (localUser == null) {
+                val pointsResult = safeApiCall { api.getUserPoints() }
+                if (pointsResult is NetworkResult.Success) {
+                    userDao.upsertUser(UserEntity(
+                        username = username,
+                        pointsBalance = pointsResult.data?.points ?: 0
+                    ))
+                    return true
+                }
+            } else {
+                return true
+            }
+        }
+        return false
     }
     suspend fun getUserProfile(): NetworkResult<UserProfileResponse> {
         return safeApiCall { api.getUserProfile() }

@@ -24,6 +24,9 @@ class WasteRepository(private val api: ReciclappApi, private val db: ReciclappDa
     val user: Flow<UserEntity?> = profileRepository.user
 
     suspend fun claimWaste(idWaste: String, points: Int): NetworkResult<Void> {
+
+        if(!profileRepository.ensureUserSynchronized()) return NetworkResult.Error("Falló la api")
+
         val request = WasteClaimRequest(idWaste = idWaste)
         val result = safeApiCall {
             api.claimWaste(request)
@@ -41,11 +44,11 @@ class WasteRepository(private val api: ReciclappApi, private val db: ReciclappDa
                     }
                     return NetworkResult.Success(data = null)
                 } catch (e: Exception) {
-                    return NetworkResult.Error(message = e.message ?: "Error inesperado en try")
+                    return NetworkResult.Error(message = e.message ?: "Error inesperado")
                 }
             }
             is NetworkResult.Error -> {
-                return NetworkResult.Error(message = result.message ?: "Error inesperado en Error")
+                return NetworkResult.Error(message = result.message ?: "Error inesperado")
             }
         }
     }

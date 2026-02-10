@@ -37,6 +37,9 @@ class RewardsRepository(
     val user: Flow<UserEntity?> = profileRepository.user
 
     suspend fun redeemItem(itemId: Long): Result<Unit> {
+
+        if(!profileRepository.ensureUserSynchronized()) return Result.failure(Exception("Falló la api"))
+
         return try {
             db.withTransaction {
                 val localUser = user.firstOrNull() ?: throw Exception("Error inesperado")

@@ -5,8 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "user_table")
 data class UserEntity(
-    @PrimaryKey val id: Int,
-    val username: String,
+    @PrimaryKey val username: String,
     val pointsBalance: Int,
     val lastUpdated: Long = System.currentTimeMillis()
 )

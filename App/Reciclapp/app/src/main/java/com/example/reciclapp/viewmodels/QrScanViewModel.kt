@@ -39,7 +39,7 @@ class QrScanViewModel(private val repository: WasteRepository) : ViewModel() {
                 val wasteId = jsonQr.getString("ID Residuo")
                 val points = jsonQr.optInt("Puntos", 0)
 
-                when (val result = repository.claimWaste(wasteId)) {
+                when (val result = repository.claimWaste(wasteId, points)) {
                     is NetworkResult.Success -> {
                         _uiState.update {
                             it.copy(
@@ -62,7 +62,6 @@ class QrScanViewModel(private val repository: WasteRepository) : ViewModel() {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("CLAIMWASTE", e.message ?: "ERROR SIN MENSAJE")
                 _uiState.update {
                     it.copy(
                         isLoading = false,

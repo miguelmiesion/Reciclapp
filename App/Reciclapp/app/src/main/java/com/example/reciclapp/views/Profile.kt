@@ -65,10 +65,6 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
 
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.refreshUserData()
-    }
-
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier

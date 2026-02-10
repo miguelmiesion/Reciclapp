@@ -1,7 +1,11 @@
 package com.example.reciclapp.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.reciclapp.database.ReciclappDatabase
+import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.repository.RewardsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,11 +35,10 @@ class ProfileViewModel(
 ) : ViewModel() {
 
     val uiState: StateFlow<ProfileUiState> = combine(
-        repository.userBalance,
         repository.allItems,
         repository.purchaseHistory,
-        repository.currentUser
-    ) { balance, items, purchases, userEntity ->
+        repository.user
+    ) { items, purchases, user ->
         val historyUi = purchases.mapNotNull { purchase ->
             val itemDetails = items.find { it.itemId == purchase.itemId }
             itemDetails?.let { item ->
@@ -51,9 +54,8 @@ class ProfileViewModel(
         }.sortedByDescending { it.date }
 
         ProfileUiState(
-            userId = userEntity?.id ?: 0,
-            username = userEntity?.username ?: "Cargando...",
-            points = balance,
+            username = user?.username ?: "Usuario",
+            points = user?.pointsBalance ?: 0,
             purchaseHistory = historyUi,
             isLoading = false
         )
@@ -62,10 +64,15 @@ class ProfileViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ProfileUiState(isLoading = true)
     )
+}
 
-    fun refreshUserData() {
-        viewModelScope.launch {
-            repository.refreshUserBalance()
+class ProfileViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
+            val db = ReciclappDatabase.getDatabase(context, kotlinx.coroutines.MainScope())
+            val api = RetrofitClient.getApi(context)
+            return ProfileViewModel(RewardsRepository(api, db)) as T
         }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [UserEntity::class, PurchaseEntity::class, ItemEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class ReciclappDatabase : RoomDatabase() {

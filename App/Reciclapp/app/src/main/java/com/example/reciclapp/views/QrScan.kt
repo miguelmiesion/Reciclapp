@@ -52,6 +52,7 @@ import androidx.navigation.NavController
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.components.ReciclappBottomBar
+import com.example.reciclapp.database.ReciclappDatabase
 import com.example.reciclapp.engine.QrCodeAnalyzer
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
@@ -60,6 +61,7 @@ import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.utils.playSound
 import com.example.reciclapp.viewmodels.QrScanViewModel
 import com.example.reciclapp.viewmodels.QrScanViewModelFactory
+import kotlinx.coroutines.MainScope
 import java.util.concurrent.Executors
 
 @Composable
@@ -67,7 +69,8 @@ fun ScanQrScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
     val popupController = LocalPopupState.current
 
-    val wasteRepository = remember { WasteRepository(RetrofitClient.getApi(context)) }
+    val wasteRepository = remember { WasteRepository(RetrofitClient.getApi(context),
+        ReciclappDatabase.getDatabase(context, MainScope())) }
 
     val viewModel: QrScanViewModel = viewModel(
         factory = QrScanViewModelFactory(wasteRepository)

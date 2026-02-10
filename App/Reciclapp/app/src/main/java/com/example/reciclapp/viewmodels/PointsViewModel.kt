@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.reciclapp.database.ReciclappDatabase
+import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.views.StoreItem
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -32,19 +34,19 @@ class PointsViewModel(
     private val _error = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<PointsUiState> = combine(
-        repository.userBalance,
+        repository.user,
         repository.allItems,
         repository.ownedItemIds,
         _isLoading,
         _error
-    ) { balance, entities, ownedIds, loading, err ->
+    ) { user, entities, ownedIds, loading, err ->
 
         val uiItems = entities.map { entity ->
             entity.toStoreItem(isOwned = ownedIds.contains(entity.itemId))
         }
 
         PointsUiState(
-            userBalance = balance,
+            userBalance = user?.pointsBalance ?: 0,
             storeItems = uiItems,
             isLoading = loading,
             error = err
@@ -64,8 +66,6 @@ class PointsViewModel(
     private fun refreshData() {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = repository.refreshUserBalance()
-            _error.value = result.exceptionOrNull()?.message
             _isLoading.value = false
         }
     }
@@ -86,13 +86,13 @@ class PointsViewModel(
     }
 }
 
-
-class ProfileViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+class PointsViewModelFactory(private val context: Context, private val api: ReciclappApi) :
+    ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(PointsViewModel::class.java)) {
+
             val db = ReciclappDatabase.getDatabase(context, kotlinx.coroutines.MainScope())
-            val api = RetrofitClient.getApi(context)
-            return ProfileViewModel(RewardsRepository(api, db)) as T
+            return PointsViewModel(RewardsRepository(api, db)) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

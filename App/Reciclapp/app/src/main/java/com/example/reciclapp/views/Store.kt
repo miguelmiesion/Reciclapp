@@ -73,6 +73,7 @@ import com.example.reciclapp.ui.theme.PointsTextGreen
 import com.example.reciclapp.ui.theme.PriceTextGreen
 import com.example.reciclapp.ui.theme.StoreBackground
 import com.example.reciclapp.viewmodels.PointsViewModel
+import com.example.reciclapp.viewmodels.PointsViewModelFactory
 
 data class StoreItem(
     val id: Int,
@@ -421,18 +422,6 @@ fun RedeemConfirmationDialog(item: StoreItem, onDismiss: () -> Unit, onConfirm: 
         },
         containerColor = Color.White, shape = RoundedCornerShape(28.dp)
     )
-}
-
-class PointsViewModelFactory(private val context: Context, private val api: ReciclappApi) :
-    ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(PointsViewModel::class.java)) {
-
-            val db = ReciclappDatabase.getDatabase(context, kotlinx.coroutines.MainScope())
-            return PointsViewModel(RewardsRepository(api, db)) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
 }
 
 fun ItemEntity.toStoreItem(isOwned: Boolean): StoreItem {

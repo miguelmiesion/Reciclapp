@@ -24,7 +24,7 @@ interface TransactionDao {
     )
     fun getTotalSpentAmount(): Flow<Int?>
 
-    @Query("SELECT itemId FROM purchase_history")
-    fun getPurchasedItemIds(): Flow<List<Long>>
+    @Query("SELECT itemId FROM purchase_history WHERE username = :username")
+    fun getPurchasedItemIds(username: String): Flow<List<Long>>
 
 }

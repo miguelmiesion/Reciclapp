@@ -30,11 +30,18 @@ class RewardsRepository(
     private val itemDao = db.itemDao()
     val allItems: Flow<List<ItemEntity>> = itemDao.getAllItems()
 
-    val purchaseHistory: Flow<List<PurchaseEntity>> = transactionDao.getAllPurchases()
-
-    val ownedItemIds: Flow<List<Long>> = transactionDao.getPurchasedItemIds()
-
     val user: Flow<UserEntity?> = profileRepository.user
+
+    val ownedItemIds: Flow<List<Long>> = flow{
+        val username: String = user.firstOrNull()?.username ?: ""
+        if(username == ""){
+            emit(emptyList())
+        }
+        else{
+        val flow = transactionDao.getPurchasedItemIds(username)
+        emitAll(flow)
+            }
+    }
 
     suspend fun redeemItem(itemId: Long): Result<Unit> {
 

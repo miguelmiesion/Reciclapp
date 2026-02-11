@@ -14,12 +14,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class HistoryUiModel(
-    val purchaseId: Long,
     val itemName: String,
     val iconName: String,
     val colorHex: String,
     val cost: Int,
-    val date: Long
 )
 
 data class ProfileUiState(
@@ -36,22 +34,20 @@ class ProfileViewModel(
 
     val uiState: StateFlow<ProfileUiState> = combine(
         repository.allItems,
-        repository.purchaseHistory,
+        repository.ownedItemIds,
         repository.user
-    ) { items, purchases, user ->
-        val historyUi = purchases.mapNotNull { purchase ->
-            val itemDetails = items.find { it.itemId == purchase.itemId }
+    ) { items, ownedItemsIds, user ->
+        val historyUi = ownedItemsIds.mapNotNull { ownedItemId ->
+            val itemDetails = items.find { it.itemId == ownedItemId }
             itemDetails?.let { item ->
                 HistoryUiModel(
-                    purchaseId = purchase.transactionId,
                     itemName = item.itemName,
                     iconName = item.icon,
                     colorHex = item.color,
                     cost = item.cost,
-                    date = purchase.timestamp
                 )
             }
-        }.sortedByDescending { it.date }
+        }.sortedByDescending { it.cost }
 
         ProfileUiState(
             username = user?.username ?: "Usuario",

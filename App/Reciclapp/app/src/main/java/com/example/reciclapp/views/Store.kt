@@ -212,8 +212,7 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
                     color = DarkerPrimary
                 )
             }
-
-            // 4. (Opcional) Mensaje si no hay items y ya terminó de cargar
+            
             if (!state.isLoading && state.storeItems.isEmpty()) {
                 Text(
                     text = "No hay items disponibles por el momento.",

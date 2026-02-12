@@ -207,28 +207,7 @@ fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Olvidaste tu contraseña?",
-                    fontSize = 12.sp,
-                    color = Color.Gray,
-                    modifier = Modifier.clickable {
-                        AlertDialog.Builder(context)
-                            .setMessage("TO-DO!")
-                            .setTitle("Funcionalidad no desarrollada :(!")
-                            .create()
-                            .show()
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height( 46.dp))
 
             Button(
                 onClick = {

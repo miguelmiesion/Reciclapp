@@ -212,7 +212,7 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
                     color = DarkerPrimary
                 )
             }
-            
+
             if (!state.isLoading && state.storeItems.isEmpty()) {
                 Text(
                     text = "No hay items disponibles por el momento.",

@@ -1,23 +1,16 @@
 package com.example.reciclapp.repository
 
-import android.util.Log
 import androidx.room.withTransaction
 import com.example.reciclapp.database.ReciclappDatabase
 import com.example.reciclapp.database.entities.ItemEntity
 import com.example.reciclapp.database.entities.PurchaseEntity
 import com.example.reciclapp.database.entities.UserEntity
 import com.example.reciclapp.network.BaseApiResponse
-import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.ReciclappApi
-import com.example.reciclapp.network.TokenManager
-import com.example.reciclapp.network.UserProfileResponse
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.toCollection
 
 class RewardsRepository(
     private val api: ReciclappApi,
@@ -32,20 +25,19 @@ class RewardsRepository(
 
     val user: Flow<UserEntity?> = profileRepository.user
 
-    val ownedItemIds: Flow<List<Long>> = flow{
+    val ownedItemIds: Flow<List<Long>> = flow {
         val username: String = user.firstOrNull()?.username ?: ""
-        if(username == ""){
+        if (username == "") {
             emit(emptyList())
+        } else {
+            val flow = transactionDao.getPurchasedItemIds(username)
+            emitAll(flow)
         }
-        else{
-        val flow = transactionDao.getPurchasedItemIds(username)
-        emitAll(flow)
-            }
     }
 
     suspend fun redeemItem(itemId: Long): Result<Unit> {
 
-        if(!profileRepository.ensureUserSynchronized()) return Result.failure(Exception("Falló la api"))
+        if (!profileRepository.ensureUserSynchronized()) return Result.failure(Exception("Falló la api"))
 
         return try {
             db.withTransaction {
@@ -60,10 +52,12 @@ class RewardsRepository(
 
                 val newBalance = localUser.pointsBalance - itemCost
 
-                userDao.upsertUser(UserEntity(
-                    username = localUser.username,
-                    pointsBalance = newBalance
-                ))
+                userDao.upsertUser(
+                    UserEntity(
+                        username = localUser.username,
+                        pointsBalance = newBalance
+                    )
+                )
 
                 val purchase = PurchaseEntity(
                     itemId = itemId,

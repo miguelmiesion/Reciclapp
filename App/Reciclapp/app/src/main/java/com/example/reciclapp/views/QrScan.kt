@@ -69,8 +69,12 @@ fun ScanQrScreen(navController: NavController, tokenManager: TokenManager) {
     val context = LocalContext.current
     val popupController = LocalPopupState.current
 
-    val wasteRepository = remember { WasteRepository(RetrofitClient.getApi(context),
-        ReciclappDatabase.getDatabase(context, MainScope())) }
+    val wasteRepository = remember {
+        WasteRepository(
+            RetrofitClient.getApi(context),
+            ReciclappDatabase.getDatabase(context, MainScope())
+        )
+    }
 
     val viewModel: QrScanViewModel = viewModel(
         factory = QrScanViewModelFactory(wasteRepository)

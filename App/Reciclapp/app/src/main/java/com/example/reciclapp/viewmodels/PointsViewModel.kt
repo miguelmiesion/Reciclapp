@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.reciclapp.database.ReciclappDatabase
 import com.example.reciclapp.network.ReciclappApi
-import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.views.StoreItem
 import com.example.reciclapp.views.toStoreItem
@@ -14,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 

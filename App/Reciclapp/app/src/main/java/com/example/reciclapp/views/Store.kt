@@ -1,6 +1,5 @@
 package com.example.reciclapp.views
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,20 +52,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.reciclapp.R
 import com.example.reciclapp.components.LocalPopupState
 import com.example.reciclapp.components.ProfileDropdown
 import com.example.reciclapp.components.ReciclappBottomBar
-import com.example.reciclapp.database.ReciclappDatabase
 import com.example.reciclapp.database.entities.ItemEntity
-import com.example.reciclapp.network.ReciclappApi
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
-import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.ui.theme.ConfirmGreen
 import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.DarkerText
@@ -293,9 +287,11 @@ fun FeaturedItemCard(item: StoreItem, onClick: () -> Unit) {
                     .padding(end = 10.dp),
                 tint = Color.Unspecified
             )
-            Column(modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(24.dp)) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(24.dp)
+            ) {
                 Text(
                     text = item.name,
                     color = Color.White,

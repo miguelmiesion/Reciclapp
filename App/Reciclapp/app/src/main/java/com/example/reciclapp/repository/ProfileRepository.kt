@@ -15,7 +15,7 @@ class ProfileRepository(val api: ReciclappApi, val db: ReciclappDatabase) : Base
     private val userDao = db.userDao()
 
     val user: Flow<UserEntity?> = flow {
-        if(ensureUserSynchronized()) {
+        if (ensureUserSynchronized()) {
             val userProfile = getUserProfile()
             val username = userProfile.data?.username
 
@@ -25,8 +25,7 @@ class ProfileRepository(val api: ReciclappApi, val db: ReciclappDatabase) : Base
             } else {
                 emit(null)
             }
-        }
-        else{
+        } else {
             emit(null)
         }
     }
@@ -42,10 +41,12 @@ class ProfileRepository(val api: ReciclappApi, val db: ReciclappDatabase) : Base
             if (localUser == null) {
                 val pointsResult = safeApiCall { api.getUserPoints() }
                 if (pointsResult is NetworkResult.Success) {
-                    userDao.upsertUser(UserEntity(
-                        username = username,
-                        pointsBalance = pointsResult.data?.points ?: 0
-                    ))
+                    userDao.upsertUser(
+                        UserEntity(
+                            username = username,
+                            pointsBalance = pointsResult.data?.points ?: 0
+                        )
+                    )
                     return true
                 }
             } else {
@@ -54,10 +55,10 @@ class ProfileRepository(val api: ReciclappApi, val db: ReciclappDatabase) : Base
         }
         return false
     }
+
     suspend fun getUserProfile(): NetworkResult<UserProfileResponse> {
         return safeApiCall { api.getUserProfile() }
     }
-
 
 
 }

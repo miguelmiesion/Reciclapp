@@ -8,7 +8,7 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.io.File
 
-class TokenManager private constructor(private val context: Context) {
+class TokenManager private constructor(context: Context) {
 
     companion object {
         @Volatile
@@ -16,11 +16,11 @@ class TokenManager private constructor(private val context: Context) {
 
         fun getInstance(context: Context) =
             instance ?: synchronized(this) {
-                instance ?: TokenManager(context).also { instance = it }
+                instance ?: TokenManager(context.applicationContext).also { instance = it }
             }
     }
 
-    private val masterKey = MasterKey.Builder(context)
+    private val masterKey = MasterKey.Builder(context.applicationContext)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
@@ -28,18 +28,20 @@ class TokenManager private constructor(private val context: Context) {
 
     init {
 
+        val appContext = context.applicationContext
+
         sharedPreferences = try {
-            createSharedPreferences()
+            createSharedPreferences(appContext)
         } catch (e: Exception) {
             e.printStackTrace()
 
-            deleteSharedPreferences()
+            deleteSharedPreferences(appContext)
 
-            createSharedPreferences()
+            createSharedPreferences(appContext)
         }
     }
 
-    private fun createSharedPreferences(): SharedPreferences {
+    private fun createSharedPreferences(context : Context): SharedPreferences {
         return EncryptedSharedPreferences.create(
             context,
             "secure_prefs",
@@ -50,7 +52,7 @@ class TokenManager private constructor(private val context: Context) {
     }
 
     @SuppressLint("SdCardPath")
-    private fun deleteSharedPreferences() {
+    private fun deleteSharedPreferences(context : Context) {
         try {
 
             val packageName = context.packageName

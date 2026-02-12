@@ -27,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +68,9 @@ import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.repository.RewardsRepository
 import com.example.reciclapp.ui.theme.ConfirmGreen
+import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.DarkerText
+import com.example.reciclapp.ui.theme.LightTextColor
 import com.example.reciclapp.ui.theme.PointsPillBg
 import com.example.reciclapp.ui.theme.PointsTextGreen
 import com.example.reciclapp.ui.theme.PriceTextGreen
@@ -134,63 +137,89 @@ fun StoreScreen(navController: NavController, tokenManager: TokenManager) {
         bottomBar = { ReciclappBottomBar(navController) },
         containerColor = StoreBackground
     ) { paddingValues ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(
-                top = paddingValues.calculateTopPadding() + 24.dp,
-                bottom = paddingValues.calculateBottomPadding() + 24.dp,
-                start = 24.dp, end = 24.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            item(span = { GridItemSpan(2) }) {
-                StoreHeader(state.userBalance, state.isLoading, navController, tokenManager)
-            }
-
-            if (featuredItems.isNotEmpty()) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(
+                    top = 24.dp,
+                    bottom = 24.dp,
+                    start = 24.dp,
+                    end = 24.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
                 item(span = { GridItemSpan(2) }) {
-                    Text(
-                        text = "Items destacados",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = DarkerText
-                        )
-                    )
+                    StoreHeader(state.userBalance, state.isLoading, navController, tokenManager)
                 }
-                items(featuredItems, span = { GridItemSpan(2) }) { item ->
-                    FeaturedItemCard(item = item) {
-                        if (item.isOwned) {
-                            popupController.showError("Ya tenés este item")
-                        } else {
-                            selectedItem = item
-                            showConfirmDialog = true
+
+                // Si ya hay items, los mostramos
+                if (featuredItems.isNotEmpty()) {
+                    item(span = { GridItemSpan(2) }) {
+                        Text(
+                            text = "Items destacados",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = DarkerText
+                            )
+                        )
+                    }
+                    items(featuredItems, span = { GridItemSpan(2) }) { item ->
+                        FeaturedItemCard(item = item) {
+                            if (item.isOwned) {
+                                popupController.showError("Ya tenés este item")
+                            } else {
+                                selectedItem = item
+                                showConfirmDialog = true
+                            }
+                        }
+                    }
+                }
+
+                if (catalogItems.isNotEmpty()) {
+                    item(span = { GridItemSpan(2) }) {
+                        Text(
+                            text = "Más para canjear",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = DarkerText
+                            ),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+
+                    items(catalogItems) { item ->
+                        StandardItemCard(item = item) {
+                            if (item.isOwned) {
+                                popupController.showError("Ya tenés este item")
+                            } else {
+                                selectedItem = item
+                                showConfirmDialog = true
+                            }
                         }
                     }
                 }
             }
 
-            item(span = { GridItemSpan(2) }) {
-                Text(
-                    text = "Más para canjear",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = DarkerText
-                    ),
-                    modifier = Modifier.padding(top = 8.dp)
+            if (state.isLoading && state.storeItems.isEmpty()) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = DarkerPrimary
                 )
             }
 
-            items(catalogItems) { item ->
-                StandardItemCard(item = item) {
-                    if (item.isOwned) {
-                        popupController.showError("Ya tenés este item")
-                    } else {
-                        selectedItem = item
-                        showConfirmDialog = true
-                    }
-                }
+            // 4. (Opcional) Mensaje si no hay items y ya terminó de cargar
+            if (!state.isLoading && state.storeItems.isEmpty()) {
+                Text(
+                    text = "No hay items disponibles por el momento.",
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color.Gray
+                )
             }
         }
     }
@@ -411,7 +440,7 @@ fun RedeemConfirmationDialog(item: StoreItem, onDismiss: () -> Unit, onConfirm: 
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Confirmar", fontWeight = FontWeight.Bold)
+                Text("Confirmar", fontWeight = FontWeight.Bold, color = LightTextColor)
             }
         },
         dismissButton = {

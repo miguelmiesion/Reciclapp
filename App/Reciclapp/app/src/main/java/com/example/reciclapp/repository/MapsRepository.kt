@@ -16,16 +16,24 @@ import java.util.Locale
 
 class MapsRepository(private val api: ReciclappApi, private val context: Context) :
     BaseApiResponse() {
+
     suspend fun getStations(): NetworkResult<List<Station>> {
         return safeApiCall { api.getStations() }
     }
-
     suspend fun calculateRoute(
         start: GeoPoint,
-        end: GeoPoint
+        end: GeoPoint,
+        apiProfile: String
     ): List<GeoPoint>? = withContext(Dispatchers.IO) {
         val roadManager = OSRMRoadManager(context, "Reciclapp/1.0")
-        roadManager.setMean(OSRMRoadManager.MEAN_BY_CAR)
+
+        val routeMean = when(apiProfile) {
+            "foot" -> OSRMRoadManager.MEAN_BY_FOOT
+            "car" -> OSRMRoadManager.MEAN_BY_CAR
+            else -> OSRMRoadManager.MEAN_BY_CAR
+        }
+
+        roadManager.setMean(routeMean)
 
         val waypoints = ArrayList<GeoPoint>()
         waypoints.add(start)

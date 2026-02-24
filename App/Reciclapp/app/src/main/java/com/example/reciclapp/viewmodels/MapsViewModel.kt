@@ -18,8 +18,16 @@ data class MapsUiState(
     val routePoints: List<GeoPoint>? = null,
     val currentAddress: String? = null,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val selectedRouteType: RouteType = RouteType.DRIVING,
+    val currentRouteStart: GeoPoint? = null,
+    val currentRouteEnd: GeoPoint? = null
 )
+
+enum class RouteType(val displayName: String, val apiProfile: String) {
+    DRIVING("En auto", "car"),
+    WALKING("Caminando", "foot")
+}
 
 class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(MapsUiState())
@@ -31,6 +39,41 @@ class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
 
     private fun loadInitialData() {
         fetchStations()
+    }
+
+    private fun recalculateActiveRoute(start: GeoPoint, end: GeoPoint, routeType: RouteType) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val points = repository.calculateRoute(start, end, routeType.apiProfile)
+                if (!points.isNullOrEmpty()) {
+                    _uiState.update { it.copy(routePoints = points, isLoading = false) }
+                } else {
+                    _uiState.update { it.copy(error = "No se pudo recalcular la ruta", isLoading = false) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Error al recalcular: ${e.message}", isLoading = false) }
+            }
+        }
+    }
+
+    fun updateRouteType(newType: RouteType) {
+        _uiState.update { it.copy(selectedRouteType = newType) }
+
+        val state = _uiState.value
+        if (state.currentRouteStart != null && state.currentRouteEnd != null) {
+            recalculateActiveRoute(state.currentRouteStart, state.currentRouteEnd, newType)
+        }
+    }
+
+    fun clearRoute() {
+        _uiState.update {
+            it.copy(
+                routePoints = null,
+                currentRouteStart = null,
+                currentRouteEnd = null
+            )
+        }
     }
 
     fun fetchStations() {
@@ -64,35 +107,33 @@ class MapsViewModel(private val repository: MapsRepository) : ViewModel() {
 
     fun drawRouteToStation(userLocation: GeoPoint, station: Station) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            val endPoint = GeoPoint(station.latitude, station.longitude)
+
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    error = null,
+                    currentRouteStart = userLocation,
+                    currentRouteEnd = endPoint
+                )
+            }
 
             try {
-                val endPoint = GeoPoint(station.latitude, station.longitude)
-
-                val points = repository.calculateRoute(userLocation, endPoint)
+                val currentRouteType = _uiState.value.selectedRouteType
+                val points = repository.calculateRoute(userLocation, endPoint, currentRouteType.apiProfile)
 
                 if (points.isNullOrEmpty()) {
                     _uiState.update {
-                        it.copy(
-                            error = "No se pudo encontrar una ruta (Verifica tu conexión)",
-                            isLoading = false
-                        )
+                        it.copy(error = "No se pudo encontrar una ruta", isLoading = false)
                     }
                 } else {
                     _uiState.update {
-                        it.copy(
-                            routePoints = points,
-                            isLoading = false
-                        )
+                        it.copy(routePoints = points, isLoading = false)
                     }
                 }
             } catch (e: Exception) {
-                Log.e("MapsViewModel", "Error calculando ruta", e)
                 _uiState.update {
-                    it.copy(
-                        error = "Error de conexión al calcular ruta: ${e.localizedMessage}",
-                        isLoading = false
-                    )
+                    it.copy(error = "Error de conexión al calcular ruta", isLoading = false)
                 }
             }
         }

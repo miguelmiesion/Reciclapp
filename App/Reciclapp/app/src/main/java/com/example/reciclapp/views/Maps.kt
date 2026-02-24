@@ -10,7 +10,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
@@ -36,6 +38,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.reciclapp.components.ReciclappBottomBar
+import com.example.reciclapp.components.RouteTypeSelector
 import com.example.reciclapp.components.StationDetailCard
 import com.example.reciclapp.components.StationSelector
 import com.example.reciclapp.network.RetrofitClient
@@ -45,6 +48,7 @@ import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.LighterPrimary
 import com.example.reciclapp.viewmodels.MapsViewModel
 import com.example.reciclapp.viewmodels.MapsViewModelFactory
+import com.example.reciclapp.viewmodels.RouteType
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -53,6 +57,7 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import android.graphics.DashPathEffect
 
 @Composable
 fun MapsScreen(navController: NavController) {
@@ -133,6 +138,9 @@ fun MapsScreen(navController: NavController) {
                         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
 
                         marker.setOnMarkerClickListener { _, _ ->
+                            if (selectedStation != station) {
+                                viewModel.clearRoute()
+                            }
                             selectedStation = station
                             val location = GeoPoint(station.latitude, station.longitude)
                             viewModel.resolveAddressForLocation(location)
@@ -144,6 +152,7 @@ fun MapsScreen(navController: NavController) {
                         map.overlays.add(marker)
                     }
 
+                    // Renderizado de la ruta
                     state.routePoints?.let { points ->
                         val routeLine = Polyline(map)
 
@@ -151,6 +160,12 @@ fun MapsScreen(navController: NavController) {
 
                         routeLine.outlinePaint.color = DarkerPrimary.toArgb()
                         routeLine.outlinePaint.strokeWidth = 16f
+
+                        if (state.selectedRouteType == RouteType.WALKING) {
+                            routeLine.outlinePaint.pathEffect = DashPathEffect(floatArrayOf(30f, 20f), 0f)
+                        } else {
+                            routeLine.outlinePaint.pathEffect = null
+                        }
 
                         routeLine.setOnClickListener { _, _, _ -> false }
 
@@ -165,6 +180,10 @@ fun MapsScreen(navController: NavController) {
                 StationSelector(
                     stations = state.stations,
                     onStationSelected = { station ->
+                        if (selectedStation != station) {
+                            viewModel.clearRoute()
+                        }
+                        
                         val targetPoint = GeoPoint(station.latitude, station.longitude)
                         mapView?.controller?.animateTo(targetPoint)
                         mapView?.controller?.setZoom(18.0)
@@ -179,20 +198,35 @@ fun MapsScreen(navController: NavController) {
                 exit = slideOutVertically { it },
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
-                selectedStation?.let { station ->
-                    StationDetailCard(
-                        station = station,
-                        onClose = { selectedStation = null },
-                        resolvedAddress = state.currentAddress,
-                        onCalculateRoute = {
-                            val myLocation = locationOverlay?.myLocation
 
-                            if (myLocation != null) {
-                                viewModel.drawRouteToStation(myLocation, station)
-                                selectedStation = null
-                            }
-                        }
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    RouteTypeSelector(
+                        selectedType = state.selectedRouteType,
+                        onTypeSelected = { newType -> viewModel.updateRouteType(newType) },
+                        modifier = Modifier
+                            .padding(bottom = 8.dp)
+                            .fillMaxWidth(0.9f) // Ajusta el ancho según tu diseño
                     )
+
+                    selectedStation?.let { station ->
+                        StationDetailCard(
+                            station = station,
+                            onClose = { selectedStation = null },
+                            resolvedAddress = state.currentAddress,
+                            onCalculateRoute = {
+                                val myLocation = locationOverlay?.myLocation
+
+                                if (myLocation != null) {
+                                    viewModel.drawRouteToStation(myLocation, station)
+                                    selectedStation = null
+                                }
+                            }
+                        )
+                    }
                 }
             }
 

@@ -98,7 +98,7 @@ fun StationDetailCard(
             ) {
                 Icon(Icons.Default.Directions, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("¿Cómo llegar?", color = LightTextColor)
+                Text("Iniciar viaje", color = LightTextColor)
             }
         }
     }

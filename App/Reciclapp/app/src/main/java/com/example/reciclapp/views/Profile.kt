@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -146,7 +148,19 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            StatItem(label = "Créditos", value = "${state.points}")
+                            StatItem(
+                                label = "Créditos",
+                                value = "${state.points}",
+                                icon = Icons.Default.Eco,
+                                iconTint = Color(0xFF4CAF50)
+                            )
+
+                            StatItem(
+                                label = "Puntos totales",
+                                value = "${state.totalPoints}",
+                                icon = Icons.Default.Star,
+                                iconTint = Color(0xFFFFC107)
+                            )
                         }
                     }
                 }
@@ -222,9 +236,9 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
 }
 
 @Composable
-fun StatItem(label: String, value: String) {
+fun StatItem(label: String, value: String, icon: ImageVector, iconTint: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(Icons.Default.Eco, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(24.dp))
+        Icon(icon, null, tint = iconTint, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.height(4.dp))
         Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
         Text(label, fontSize = 12.sp, color = Color.LightGray)

@@ -53,14 +53,16 @@ import com.example.reciclapp.components.ReciclappBottomBar
 import com.example.reciclapp.network.RetrofitClient
 import com.example.reciclapp.network.TokenManager
 import com.example.reciclapp.repository.RankingRepository
-import com.example.reciclapp.ui.theme.Bronze
 import com.example.reciclapp.ui.theme.DarkerPrimary
-import com.example.reciclapp.ui.theme.Gold
 import com.example.reciclapp.ui.theme.Primary
-import com.example.reciclapp.ui.theme.Silver
 import com.example.reciclapp.ui.theme.TextColor
 import com.example.reciclapp.viewmodels.RankingViewModel
 import com.example.reciclapp.viewmodels.RankingViewModelFactory
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.example.reciclapp.R
 
 @Composable
 fun RankingScreen(navController: NavController, tokenManager: TokenManager) {
@@ -224,20 +226,40 @@ fun RankingItem(rank: Int, username: String, points: Int?, isCurrentUser: Boolea
             .background(if (isCurrentUser) Primary else Color.White)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(modifier = Modifier.width(32.dp)) {
+    ) { Box(
+            modifier = Modifier.width(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
             when (rank) {
-                1 -> Icon(Icons.Default.EmojiEvents, null, tint = Gold)
-                2 -> Icon(Icons.Default.EmojiEvents, null, tint = Silver)
-                3 -> Icon(Icons.Default.EmojiEvents, null, tint = Bronze)
+                1 -> Image(
+                    painter = painterResource(id = R.drawable.trophy_1),
+                    contentDescription = "Primer puesto",
+                    modifier = Modifier.size(48.dp),
+                    contentScale = ContentScale.Fit
+                )
+                2 -> Image(
+                    painter = painterResource(id = R.drawable.trophy_2),
+                    contentDescription = "Segundo puesto",
+                    modifier = Modifier.size(48.dp),
+                    contentScale = ContentScale.Fit
+                )
+                3 -> Image(
+                    painter = painterResource(id = R.drawable.trophy_3),
+                    contentDescription = "Tercer puesto",
+                    modifier = Modifier.size(48.dp),
+                    contentScale = ContentScale.Fit
+                )
                 else -> Text(
                     text = if (rank == 0) "--" else "$rank",
                     fontWeight = FontWeight.Bold,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    fontSize = 18.sp
                 )
             }
         }
+
         Spacer(modifier = Modifier.width(8.dp))
+
         Icon(
             imageVector = Icons.Default.Person,
             contentDescription = null,
@@ -246,9 +268,7 @@ fun RankingItem(rank: Int, username: String, points: Int?, isCurrentUser: Boolea
                 .size(36.dp)
                 .clip(CircleShape)
                 .background(
-                    if (isCurrentUser) Color.White.copy(alpha = 0.5f) else Color.LightGray.copy(
-                        alpha = 0.3f
-                    )
+                    if (isCurrentUser) Color.White.copy(alpha = 0.5f) else Color.LightGray.copy(alpha = 0.3f)
                 )
                 .padding(4.dp)
         )

@@ -5,6 +5,7 @@ import com.example.reciclapp.database.entities.UserEntity
 import com.example.reciclapp.network.BaseApiResponse
 import com.example.reciclapp.network.NetworkResult
 import com.example.reciclapp.network.ReciclappApi
+import com.example.reciclapp.network.UserPointsResponse
 import com.example.reciclapp.network.UserProfileResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -58,6 +59,10 @@ class ProfileRepository(val api: ReciclappApi, val db: ReciclappDatabase) : Base
 
     suspend fun getUserProfile(): NetworkResult<UserProfileResponse> {
         return safeApiCall { api.getUserProfile() }
+    }
+
+    suspend fun getUserPoints(): NetworkResult<UserPointsResponse> {
+        return safeApiCall { api.getUserPoints()}
     }
 
 

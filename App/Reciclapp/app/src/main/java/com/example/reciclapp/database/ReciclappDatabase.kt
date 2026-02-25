@@ -51,11 +51,11 @@ abstract class ReciclappDatabase : RoomDatabase() {
 
         suspend fun populateDatabase(itemDao: ItemDao) {
             val initialItems = listOf(
-                ItemEntity(1, "Totebag Reciclapp", 500, true, "shopping_bag", "#444444"),
-                ItemEntity(2, "Decoración Oro", 200, false, "oro", "#FFD700"),
-                ItemEntity(3, "Badge Reciclador", 150, false, "eco", "#4CAF50"),
-                ItemEntity(4, "Icono Premium", 300, false, "premium", "#673AB7"),
-                ItemEntity(5, "Plantar un Árbol", 400, false, "tree", "#2E7D32")
+                ItemEntity(1, "Totebag reciclapp", 500, true, "shopping_bag", "#444444"),
+                ItemEntity(2, "Decoración oro", 200, false, "oro", "#FFD700"),
+                ItemEntity(3, "Badge reciclador", 150, false, "eco", "#4CAF50"),
+                ItemEntity(4, "Icono premium", 300, false, "premium", "#673AB7"),
+                ItemEntity(5, "Plantar un árbol", 400, false, "tree", "#2E7D32")
             )
 
             try {

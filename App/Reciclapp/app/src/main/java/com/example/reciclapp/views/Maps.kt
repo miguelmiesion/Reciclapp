@@ -183,7 +183,7 @@ fun MapsScreen(navController: NavController) {
                         if (selectedStation != station) {
                             viewModel.clearRoute()
                         }
-                        
+
                         val targetPoint = GeoPoint(station.latitude, station.longitude)
                         mapView?.controller?.animateTo(targetPoint)
                         mapView?.controller?.setZoom(18.0)

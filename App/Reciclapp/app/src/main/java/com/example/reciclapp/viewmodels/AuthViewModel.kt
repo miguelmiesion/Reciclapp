@@ -3,6 +3,7 @@ package com.example.reciclapp.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.reciclapp.network.ApiEnvironmentManager
 import com.example.reciclapp.network.LoginRequest
 import com.example.reciclapp.network.LogoutRequest
 import com.example.reciclapp.network.NetworkResult
@@ -28,6 +29,25 @@ class AuthViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     var uiState = _uiState.asStateFlow()
+
+    private val _apiUrlInput = MutableStateFlow(ApiEnvironmentManager.currentBaseUrl)
+    val apiUrlInput = _apiUrlInput.asStateFlow()
+
+    fun onApiUrlInputChanged(newUrl: String) {
+        _apiUrlInput.value = newUrl
+    }
+
+    fun applyDynamicApiUrl() {
+        var urlToApply = _apiUrlInput.value.trim()
+
+        if (!urlToApply.endsWith("/")) {
+            urlToApply += "/"
+        }
+
+        ApiEnvironmentManager.currentBaseUrl = urlToApply
+
+        _apiUrlInput.value = urlToApply
+    }
 
     fun login(username: String, password: String) {
         viewModelScope.launch {

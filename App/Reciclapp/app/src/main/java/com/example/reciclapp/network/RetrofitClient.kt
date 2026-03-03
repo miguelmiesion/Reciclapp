@@ -11,6 +11,8 @@ object RetrofitClient {
 
     private var apiInstance: ReciclappApi? = null
 
+    private val dynamicUrlInterceptor = DynamicBaseUrlInterceptor()
+
     fun getApi(context: Context): ReciclappApi {
         if (apiInstance != null) return apiInstance!!
 
@@ -24,6 +26,7 @@ object RetrofitClient {
         }
 
         val client = OkHttpClient.Builder()
+            .addInterceptor(dynamicUrlInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
             .authenticator(authenticator)
@@ -43,6 +46,7 @@ object RetrofitClient {
         val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
 
         val client = OkHttpClient.Builder()
+            .addInterceptor(dynamicUrlInterceptor)
             .addInterceptor(logging)
             .build()
 

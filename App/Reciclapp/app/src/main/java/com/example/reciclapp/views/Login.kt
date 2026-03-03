@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -57,6 +58,10 @@ import com.example.reciclapp.ui.theme.DarkerPrimary
 import com.example.reciclapp.ui.theme.LightTextColor
 import com.example.reciclapp.viewmodels.AuthViewModel
 import com.example.reciclapp.viewmodels.AuthViewModelFactory
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 
 @Composable
 fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
@@ -72,6 +77,8 @@ fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    var showApiConfigDialog by remember { mutableStateOf(false) }
 
     val isFormValid = username.isNotBlank() && password.isNotBlank()
 
@@ -97,6 +104,8 @@ fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
             .imePadding(),
         contentAlignment = Alignment.TopCenter
     ) {
+
+
 
         Column(
             modifier = Modifier
@@ -228,6 +237,60 @@ fun LoginScreen(navController: NavController, tokenManager: TokenManager) {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+        IconButton(
+            onClick = { showApiConfigDialog = true },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(end = 16.dp, top = 16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Configurar API",
+                tint = Color.Gray
+            )
+        }
+        if (showApiConfigDialog) {
+
+            val apiUrlInput by viewModel.apiUrlInput.collectAsState()
+
+            AlertDialog(
+                onDismissRequest = { showApiConfigDialog = false },
+                title = { Text(text = "Entorno de desarrollo") },
+                text = {
+                    Column {
+                        Text(
+                            text = "Modifica la Base URL para apuntar a un servidor local o de prueba.",
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = apiUrlInput,
+                            onValueChange = { viewModel.onApiUrlInputChanged(it) },
+                            label = { Text("Base URL") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.applyDynamicApiUrl()
+                            showApiConfigDialog = false
+                        }
+                    ) {
+                        Text("Guardar y aplicar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showApiConfigDialog = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
         }
     }
 }

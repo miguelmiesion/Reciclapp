@@ -172,7 +172,7 @@ fun ProfileScreen(navController: NavController, tokenManager: TokenManager) {
 
 
                 Text(
-                    text = "Mis Canjes Recientes",
+                    text = "Mis canjes recientes",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.Start)

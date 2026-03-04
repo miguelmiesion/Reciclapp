@@ -65,7 +65,7 @@ class QrScanViewModel(private val repository: WasteRepository) : ViewModel() {
                     it.copy(
                         isLoading = false,
                         error = true,
-                        message = "Error en el servidor, intente nuevamente."
+                        message = "El código QR no es válido"
                     )
                 }
             }

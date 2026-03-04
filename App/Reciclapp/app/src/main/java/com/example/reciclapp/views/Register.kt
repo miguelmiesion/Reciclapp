@@ -86,7 +86,7 @@ fun RegisterScreen(navController: NavController, tokenManager: TokenManager) {
 
     LaunchedEffect(uiState.isRegisterSuccess) {
         if (uiState.isRegisterSuccess) {
-            navController.navigate("home_screen") {
+            navController.navigate("login_screen") {
                 popUpTo("login_screen") { inclusive = true }
             }
         }
